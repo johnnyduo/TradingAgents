@@ -21,46 +21,42 @@ else
   echo "  ❌ Not installed (run: npm install -g pnpm)"
 fi
 
-# Check PostgreSQL
-echo "🗄️  PostgreSQL:"
-if command -v psql &> /dev/null; then
-  if pg_isready &> /dev/null; then
-    echo "  ✅ Running ($(psql --version | head -n1))"
-  else
-    echo "  ⚠️  Installed but not running (start: brew services start postgresql@14)"
-  fi
-else
-  echo "  ❌ Not installed"
-fi
-
 # Check .env file
 echo "⚙️  Configuration:"
 if [ -f ".env" ]; then
   echo "  ✅ .env file exists"
+  
+  # Check DATABASE_URL
+  if grep -q "DATABASE_URL=" .env && ! grep -q "PROJECT-REF" .env 2>/dev/null; then
+    echo "  ✅ DATABASE_URL configured (Supabase)"
+  else
+    echo "  ⚠️  DATABASE_URL not configured"
+    echo "      Get from: https://supabase.com > Project Settings > Database"
+  fi
+  
+  # Check DIRECT_URL
+  if grep -q "DIRECT_URL=" .env && ! grep -q "PROJECT-REF" .env 2>/dev/null; then
+    echo "  ✅ DIRECT_URL configured"
+  else
+    echo "  ⚠️  DIRECT_URL not configured"
+  fi
+  
+  # Check API keys
   if grep -q "OPENAI_API_KEY=\"sk-" .env 2>/dev/null; then
     echo "  ✅ OpenAI API key configured"
   else
-    echo "  ⚠️  OpenAI API key missing or placeholder"
+    echo "  ⚠️  OpenAI API key missing"
+    echo "      Get from: https://platform.openai.com/api-keys"
   fi
-  if grep -q "ALPHA_VANTAGE_API_KEY=" .env | grep -v '""' 2>/dev/null; then
+  
+  if grep -q "ALPHA_VANTAGE_API_KEY=" .env | grep -v '""' &> /dev/null; then
     echo "  ✅ Alpha Vantage API key configured"
   else
     echo "  ⚠️  Alpha Vantage API key missing"
+    echo "      Get from: https://www.alphavantage.co/support/#api-key"
   fi
 else
   echo "  ❌ .env file missing (copy from .env.example)"
-fi
-
-# Check database
-echo "💾 Database:"
-if command -v psql &> /dev/null && pg_isready &> /dev/null; then
-  if psql -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw tradingagents_dev; then
-    echo "  ✅ tradingagents_dev database exists"
-  else
-    echo "  ⚠️  Database not created (run: ./setup.sh)"
-  fi
-else
-  echo "  ⏭️  Skipped (PostgreSQL not running)"
 fi
 
 # Check dependencies
@@ -69,6 +65,14 @@ if [ -d "node_modules" ]; then
   echo "  ✅ node_modules exists"
 else
   echo "  ⚠️  Dependencies not installed (run: pnpm install)"
+fi
+
+# Check Prisma client
+echo "🔧 Prisma:"
+if [ -d "apps/api/node_modules/.prisma" ] || [ -d "apps/api/node_modules/@prisma" ]; then
+  echo "  ✅ Prisma client generated"
+else
+  echo "  ⚠️  Prisma client not generated (run: ./setup.sh)"
 fi
 
 # Check ports
@@ -90,26 +94,55 @@ echo "===================================="
 echo "📋 Next Steps:"
 echo ""
 
+NEEDS_SETUP=false
+
 if ! command -v pnpm &> /dev/null; then
   echo "  1. Install pnpm: npm install -g pnpm"
-fi
-
-if ! pg_isready &> /dev/null 2>&1; then
-  echo "  1. Start PostgreSQL: brew services start postgresql@14"
+  NEEDS_SETUP=true
 fi
 
 if [ ! -f ".env" ]; then
-  echo "  2. Create .env: cp .env.example .env"
-  echo "  3. Add API keys to .env"
+  echo "  2. Copy .env.example to .env: cp .env.example .env"
+  NEEDS_SETUP=true
 fi
 
-if ! psql -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw tradingagents_dev 2>/dev/null; then
-  echo "  4. Run setup: ./setup.sh"
+if grep -q "PROJECT-REF" .env 2>/dev/null || ! grep -q "DATABASE_URL=" .env 2>/dev/null; then
+  echo "  3. Set up Supabase database:"
+  echo "     - Go to https://supabase.com and create a project"
+  echo "     - Get connection strings from Project Settings > Database"
+  echo "     - Add DATABASE_URL and DIRECT_URL to .env"
+  NEEDS_SETUP=true
+fi
+
+if ! grep -q "OPENAI_API_KEY=\"sk-" .env 2>/dev/null; then
+  echo "  4. Add OPENAI_API_KEY to .env"
+  NEEDS_SETUP=true
+fi
+
+if ! grep -q "ALPHA_VANTAGE_API_KEY=" .env 2>/dev/null || grep -q "ALPHA_VANTAGE_API_KEY=\"\"" .env 2>/dev/null; then
+  echo "  5. Add ALPHA_VANTAGE_API_KEY to .env"
+  NEEDS_SETUP=true
 fi
 
 if [ ! -d "node_modules" ]; then
-  echo "  5. Install dependencies: pnpm install"
+  echo "  6. Install dependencies: pnpm install"
+  NEEDS_SETUP=true
 fi
 
-echo "  ✨ Start development: pnpm dev"
+if [ ! -d "apps/api/node_modules/.prisma" ] && [ ! -d "apps/api/node_modules/@prisma" ]; then
+  echo "  7. Run setup: ./setup.sh"
+  NEEDS_SETUP=true
+fi
+
+if [ "$NEEDS_SETUP" = false ]; then
+  echo "  ✅ All set! Ready to run."
+  echo ""
+  echo "  ✨ Start development: pnpm dev"
+else
+  echo ""
+  echo "  ✨ After setup, start with: pnpm dev"
+fi
+
+echo ""
+echo "📖 For detailed instructions, see DEVELOPMENT.md"
 echo ""

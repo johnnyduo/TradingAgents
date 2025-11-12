@@ -7,38 +7,60 @@
 pnpm install
 ```
 
-### 2. Configure Environment
+### 2. Set Up Supabase Database (Free Cloud Database)
+
+**Why Supabase?**
+- ✅ No local PostgreSQL installation needed
+- ✅ Free tier with 500MB database
+- ✅ Automatic backups
+- ✅ Built-in dashboard and SQL editor
+- ✅ Works from anywhere
+
+**Steps:**
+
+1. **Create Supabase Account**
+   - Go to [https://supabase.com](https://supabase.com)
+   - Sign up with GitHub or email (free)
+
+2. **Create a New Project**
+   - Click "New Project"
+   - Choose a name (e.g., "tradingagents")
+   - Set a strong database password (save it!)
+   - Choose a region close to you
+   - Click "Create new project"
+   - Wait 2-3 minutes for setup
+
+3. **Get Database Connection Strings**
+   - Go to **Project Settings** (gear icon) > **Database**
+   - Scroll to **Connection string**
+   - Copy **"Transaction"** pooler URL → Use as `DATABASE_URL`
+   - Copy **"Session"** pooler URL → Use as `DIRECT_URL`
+   - Replace `[YOUR-PASSWORD]` with your actual database password
+
+### 3. Configure Environment
 ```bash
 # Copy environment template
 cp .env.example .env
 
-# Edit .env and add your API keys:
-# - OPENAI_API_KEY (required for AI agents)
-# - ALPHA_VANTAGE_API_KEY (required for stock data)
+# Edit .env and add:
+# 1. DATABASE_URL (from Supabase Transaction pooler)
+# 2. DIRECT_URL (from Supabase Session pooler)
+# 3. OPENAI_API_KEY (from https://platform.openai.com/api-keys)
+# 4. ALPHA_VANTAGE_API_KEY (from https://www.alphavantage.co/support/#api-key)
 ```
 
-### 3. Start PostgreSQL
+Example `.env`:
 ```bash
-# macOS with Homebrew
-brew services start postgresql@14
-
-# Or use Docker
-docker run --name tradingagents-postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
-  -d postgres:14
+DATABASE_URL="postgresql://postgres.xxxxx:[PASSWORD]@aws-0-us-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.xxxxx:[PASSWORD]@aws-0-us-west-1.pooler.supabase.com:5432/postgres"
+OPENAI_API_KEY="sk-proj-..."
+ALPHA_VANTAGE_API_KEY="YOUR_KEY_HERE"
 ```
 
-### 4. Set Up Database
+### 4. Set Up Database Schema
 ```bash
-# Run the setup script
+# Run the setup script (pushes Prisma schema to Supabase)
 ./setup.sh
-
-# Or manually:
-createdb tradingagents_dev
-cd apps/api
-pnpm prisma generate
-pnpm prisma db push
 ```
 
 ### 5. Start Development Servers
@@ -110,42 +132,81 @@ packages/
 ### Health
 - `GET /health` - Server health check
 
-## Database
+## Database Management
 
-### View Data
+### View Data (3 ways)
+
+**1. Supabase Dashboard (Recommended)**
+```bash
+# Go to https://supabase.com/dashboard
+# Select your project > Table Editor
+# View and edit data with GUI
+```
+
+**2. Prisma Studio (Local GUI)**
 ```bash
 cd apps/api
 pnpm prisma studio
+# Opens at http://localhost:5555
+```
+
+**3. SQL Editor in Supabase**
+```bash
+# Go to Supabase Dashboard > SQL Editor
+# Run custom queries
 ```
 
 ### Reset Database
 ```bash
 cd apps/api
 pnpm prisma db push --force-reset
+# Warning: This will delete all data!
 ```
 
 ### Create Migration
 ```bash
 cd apps/api
 pnpm prisma migrate dev --name description
+# Note: For Supabase, db push is often easier for development
+```
+
+### Backup Database
+```bash
+# Automatic daily backups in Supabase (free tier: 7 days retention)
+# Manual backup: Supabase Dashboard > Database > Backups
 ```
 
 ## Common Issues
 
 ### Backend won't start
-- Check PostgreSQL is running: `pg_isready`
-- Check .env file exists and has required keys
-- Check database exists: `psql -l | grep tradingagents_dev`
+- Check .env file exists and has all required keys
+- Verify DATABASE_URL and DIRECT_URL are correct
+- Check Supabase project is active (not paused)
+- Run `./check-status.sh` to diagnose issues
+
+### Database connection fails
+- Verify Supabase project is running (not paused after 7 days of inactivity)
+- Check DATABASE_URL has correct password
+- Ensure you copied the **Transaction pooler** URL for DATABASE_URL
+- Ensure you copied the **Session pooler** URL for DIRECT_URL
+- Check firewall isn't blocking Supabase IPs
 
 ### Frontend won't connect
 - Ensure backend is running on port 3001
 - Check CORS settings in `apps/api/src/index.ts`
 - Check browser console for errors
+- Verify `http://localhost:3001/health` returns 200
 
 ### Analysis fails
-- Verify OPENAI_API_KEY is set in .env
+- Verify OPENAI_API_KEY is set in .env and starts with `sk-`
 - Verify ALPHA_VANTAGE_API_KEY is set
 - Check backend logs: `tail -f apps/api/logs/error.log`
+- Test OpenAI key: `curl https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY"`
+
+### Prisma client errors
+- Run `cd apps/api && pnpm prisma generate`
+- If schema changed, run `pnpm prisma db push`
+- Check DATABASE_URL format is correct
 
 ### Rate Limiting
 Alpha Vantage free tier limits:
@@ -156,6 +217,12 @@ If you hit limits:
 - Wait a minute and try again
 - Get a premium key
 - Implement caching (TODO)
+
+### Supabase project paused
+Free tier projects pause after 7 days of inactivity:
+- Go to Supabase Dashboard
+- Click "Resume project"
+- Wait 1-2 minutes for restart
 
 ## Development Tips
 
