@@ -1,8 +1,11 @@
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { BaseAgent, AgentConfig } from './base.agent';
 import { stockTools } from '../tools/stock.tools';
+import { cryptoTools } from '../tools/crypto.tools';
+import { forexTools } from '../tools/forex.tools';
 import { AgentState } from '@tradingagents/types';
 import { logger } from '../utils/logger';
+import { detectAssetType, getAnalysisContext } from '../utils/assetUtils';
 
 export class MarketAnalystAgent extends BaseAgent {
   constructor(config?: Partial<AgentConfig>) {
@@ -15,52 +18,47 @@ export class MarketAnalystAgent extends BaseAgent {
   }
 
   protected setupTools(): void {
-    this.tools = stockTools;
+    // Combine all tools - will select appropriate ones at runtime
+    this.tools = [...stockTools, ...cryptoTools, ...forexTools];
   }
 
   protected createPromptTemplate(): ChatPromptTemplate {
     return ChatPromptTemplate.fromMessages([
       [
         'system',
-        `You are a Market Analyst specializing in technical analysis and market data interpretation.
+        `You are a Market Analyst specializing in technical analysis and market data interpretation for stocks, cryptocurrencies, and forex.
 
 Your role is to:
-1. Analyze stock price movements and trends
-2. Calculate and interpret technical indicators (SMA, RSI, MACD)
+1. Analyze price movements and trends
+2. Calculate and interpret technical indicators
 3. Identify support and resistance levels
 4. Assess market momentum and volatility
 5. Provide data-driven insights on price action
 
 Guidelines:
-- Use the available tools to fetch current prices, historical data, and technical indicators
+- Adapt your analysis based on the asset type (stock, crypto, or forex)
 - Always back your analysis with specific data points
 - Consider multiple timeframes when analyzing trends
 - Be objective and focus on what the data shows
-- Provide clear buy/sell/hold signals when appropriate
+- Write in natural, conversational language without markdown formatting (no ###, **, or bullets)
+- Structure your analysis with clear paragraphs and natural transitions
 
-Available tools:
-- get_stock_price: Get current price and quote data
-- get_historical_prices: Get historical daily prices
-- calculate_sma: Calculate Simple Moving Average
-- calculate_rsi: Calculate Relative Strength Index
-- calculate_macd: Calculate MACD indicator
-- get_company_fundamentals: Get company overview and fundamentals
-- get_stock_news: Get recent news with sentiment
+{assetContext}
 
-Format your response as a comprehensive market analysis report.`,
+Write your analysis as if speaking to an investor, using plain English without technical jargon where possible.`,
       ],
       [
         'human',
-        `Analyze {ticker} for trading on {date}.
+        `Analyze {ticker} ({assetType}) for trading on {date}.
 
 Context: {context}
 
-Provide a detailed technical analysis including:
+Provide a detailed market analysis including:
 1. Current price and recent price action
-2. Key technical indicators (SMA, RSI, MACD)
+2. Key technical indicators and what they mean
 3. Trend analysis (short-term and long-term)
 4. Support and resistance levels
-5. Trading recommendation with reasoning`,
+5. Trading outlook with clear reasoning`,
       ],
     ]);
   }
@@ -68,41 +66,82 @@ Provide a detailed technical analysis including:
   async execute(state: AgentState): Promise<AgentState> {
     try {
       this.updateStatus('running');
-      logger.info(`🔍 Market Analyst analyzing ${state.ticker}`);
+      
+      // Detect asset type
+      const assetInfo = detectAssetType(state.ticker);
+      const assetContext = getAnalysisContext(assetInfo.type);
+      
+      logger.info(`🔍 Market Analyst analyzing ${state.ticker} (${assetInfo.type})`);
 
-      // Manually gather market data using tools
+      // Gather market data using appropriate tools based on asset type
       const toolResults: any[] = [];
       
-      // Get current price
-      try {
-        const priceResult = await this.tools[0].invoke({ ticker: state.ticker });
-        toolResults.push({ tool: 'get_stock_price', result: priceResult });
-      } catch (error: any) {
-        logger.warn(`Price fetch failed: ${error.message}`);
-      }
+      if (assetInfo.type === 'stock') {
+        // Stock analysis tools
+        try {
+          const priceResult = await this.tools.find(t => t.name === 'get_stock_price')?.invoke({ ticker: state.ticker });
+          if (priceResult) toolResults.push({ tool: 'get_stock_price', result: priceResult });
+        } catch (error: any) {
+          logger.warn(`Stock price fetch failed: ${error.message}`);
+        }
 
-      // Get historical prices
-      try {
-        const histResult = await this.tools[1].invoke({ ticker: state.ticker, outputsize: 'compact' });
-        toolResults.push({ tool: 'get_historical_prices', result: histResult });
-      } catch (error: any) {
-        logger.warn(`Historical fetch failed: ${error.message}`);
-      }
+        try {
+          const histResult = await this.tools.find(t => t.name === 'get_historical_prices')?.invoke({ ticker: state.ticker, outputsize: 'compact' });
+          if (histResult) toolResults.push({ tool: 'get_historical_prices', result: histResult });
+        } catch (error: any) {
+          logger.warn(`Historical prices fetch failed: ${error.message}`);
+        }
 
-      // Calculate SMA
-      try {
-        const smaResult = await this.tools[2].invoke({ ticker: state.ticker, interval: 'daily', timePeriod: 20, seriesType: 'close' });
-        toolResults.push({ tool: 'calculate_sma', result: smaResult });
-      } catch (error: any) {
-        logger.warn(`SMA calculation failed: ${error.message}`);
-      }
+        try {
+          const smaResult = await this.tools.find(t => t.name === 'calculate_sma')?.invoke({ ticker: state.ticker, interval: 'daily', timePeriod: 20, seriesType: 'close' });
+          if (smaResult) toolResults.push({ tool: 'calculate_sma', result: smaResult });
+        } catch (error: any) {
+          logger.warn(`SMA calculation failed: ${error.message}`);
+        }
 
-      // Calculate RSI
-      try {
-        const rsiResult = await this.tools[3].invoke({ ticker: state.ticker, interval: 'daily', timePeriod: 14, seriesType: 'close' });
-        toolResults.push({ tool: 'calculate_rsi', result: rsiResult });
-      } catch (error: any) {
-        logger.warn(`RSI calculation failed: ${error.message}`);
+        try {
+          const rsiResult = await this.tools.find(t => t.name === 'calculate_rsi')?.invoke({ ticker: state.ticker, interval: 'daily', timePeriod: 14, seriesType: 'close' });
+          if (rsiResult) toolResults.push({ tool: 'calculate_rsi', result: rsiResult });
+        } catch (error: any) {
+          logger.warn(`RSI calculation failed: ${error.message}`);
+        }
+      } else if (assetInfo.type === 'crypto') {
+        // Crypto analysis tools
+        try {
+          const priceResult = await this.tools.find(t => t.name === 'get_crypto_price')?.invoke({ symbol: state.ticker, market: 'USD' });
+          if (priceResult) toolResults.push({ tool: 'get_crypto_price', result: priceResult });
+        } catch (error: any) {
+          logger.warn(`Crypto price fetch failed: ${error.message}`);
+        }
+
+        try {
+          const histResult = await this.tools.find(t => t.name === 'get_historical_crypto_prices')?.invoke({ symbol: state.ticker, market: 'USD' });
+          if (histResult) toolResults.push({ tool: 'get_historical_crypto_prices', result: histResult });
+        } catch (error: any) {
+          logger.warn(`Crypto historical fetch failed: ${error.message}`);
+        }
+      } else if (assetInfo.type === 'forex') {
+        // Forex analysis tools
+        try {
+          const rateResult = await this.tools.find(t => t.name === 'get_forex_rate')?.invoke({ pair: state.ticker });
+          if (rateResult) toolResults.push({ tool: 'get_forex_rate', result: rateResult });
+        } catch (error: any) {
+          logger.warn(`Forex rate fetch failed: ${error.message}`);
+        }
+
+        try {
+          const histResult = await this.tools.find(t => t.name === 'get_historical_forex_rates')?.invoke({ pair: state.ticker, outputsize: 'compact' });
+          if (histResult) toolResults.push({ tool: 'get_historical_forex_rates', result: histResult });
+        } catch (error: any) {
+          logger.warn(`Forex historical fetch failed: ${error.message}`);
+        }
+
+        try {
+          const intradayResult = await this.tools.find(t => t.name === 'get_intraday_forex_rates')?.invoke({ pair: state.ticker, interval: '60min', outputsize: 'compact' });
+          if (intradayResult) toolResults.push({ tool: 'get_intraday_forex_rates', result: intradayResult });
+        } catch (error: any) {
+          logger.warn(`Forex intraday fetch failed: ${error.message}`);
+        }
       }
 
       // Prepare context with tool results
@@ -110,6 +149,8 @@ Provide a detailed technical analysis including:
 
       const prompt = await this.promptTemplate.format({
         ticker: state.ticker,
+        assetType: assetInfo.type,
+        assetContext,
         date: state.date,
         context: `${state.context || ''}\n\nMarket Data:\n${dataContext}`,
       });
@@ -124,6 +165,8 @@ Provide a detailed technical analysis including:
 
       return {
         ...state,
+        assetType: assetInfo.type,
+        assetInfo,
         marketAnalysis: {
           agent: this.name,
           report: content,

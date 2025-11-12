@@ -1,6 +1,8 @@
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { BaseAgent, AgentConfig } from './base.agent';
 import { getStockNewsTool } from '../tools/stock.tools';
+import { getCryptoNewsTool } from '../tools/crypto.tools';
+import { getForexNewsTool } from '../tools/forex.tools';
 import { AgentState } from '@tradingagents/types';
 import { logger } from '../utils/logger';
 
@@ -15,34 +17,35 @@ export class NewsAnalystAgent extends BaseAgent {
   }
 
   protected setupTools(): void {
-    this.tools = [getStockNewsTool];
+    this.tools = [getStockNewsTool, getCryptoNewsTool, getForexNewsTool];
   }
 
   protected createPromptTemplate(): ChatPromptTemplate {
     return ChatPromptTemplate.fromMessages([
       [
         'system',
-        `You are a News Analyst specializing in news sentiment analysis and market event interpretation.
+        `You are a News Analyst specializing in news sentiment analysis and market event interpretation for stocks, cryptocurrencies, and forex.
 
 Your role is to:
-1. Analyze recent news articles about the company
+1. Analyze recent news articles and events
 2. Assess overall sentiment (bullish, bearish, neutral)
-3. Identify key catalysts and events
+3. Identify key catalysts and market-moving events
 4. Evaluate potential market impact
 5. Consider credibility of news sources
 
 Guidelines:
+- Adapt your analysis based on the asset type
 - Focus on recent, relevant news
 - Distinguish between short-term noise and long-term trends
 - Consider the timing and recency of news
 - Identify both opportunities and risks
-- Weight sentiment by source credibility
+- Write in natural, conversational language without markdown formatting (no ###, **, or bullets)
 
-Format your response as a comprehensive news analysis report.`,
+Write your analysis as if speaking to an investor, using plain English.`,
       ],
       [
         'human',
-        `Analyze news and sentiment for {ticker} as of {date}.
+        `Analyze news and sentiment for {ticker} ({assetType}) as of {date}.
 
 Context from previous analyses:
 Market Analysis: {marketAnalysis}
@@ -64,16 +67,40 @@ Provide:
       const toolResults: any[] = [];
       
       // Use news tool to get sentiment data
+      // Use appropriate news tool based on asset type
+      const assetType = state.assetType || 'stock';
+      
       if (this.tools.length > 0) {
         try {
-          logger.info(`🔧 News Analyst invoking get_stock_news tool for ${state.ticker}...`);
-          const newsTool = this.tools[0];
-          const newsResult = await newsTool.invoke({ ticker: state.ticker, limit: 10 });
+          let newsResult;
+          
+          if (assetType === 'stock') {
+            logger.info(`🔧 News Analyst invoking get_stock_news tool for ${state.ticker}...`);
+            const newsTool = this.tools.find(t => t.name === 'get_stock_news');
+            if (newsTool) {
+              newsResult = await newsTool.invoke({ ticker: state.ticker, limit: 10 });
+              toolResults.push({ tool: 'get_stock_news', result: newsResult });
+            }
+          } else if (assetType === 'crypto') {
+            logger.info(`🔧 News Analyst invoking get_crypto_news tool...`);
+            const newsTool = this.tools.find(t => t.name === 'get_crypto_news');
+            if (newsTool) {
+              newsResult = await newsTool.invoke({ topics: 'cryptocurrency,blockchain', limit: 10 });
+              toolResults.push({ tool: 'get_crypto_news', result: newsResult });
+            }
+          } else if (assetType === 'forex') {
+            logger.info(`🔧 News Analyst invoking get_forex_news tool...`);
+            const newsTool = this.tools.find(t => t.name === 'get_forex_news');
+            if (newsTool) {
+              newsResult = await newsTool.invoke({ topics: 'economy,forex', limit: 10 });
+              toolResults.push({ tool: 'get_forex_news', result: newsResult });
+            }
+          }
+          
           logger.info(`✅ News tool completed successfully`);
-          toolResults.push({ tool: 'get_stock_news', result: newsResult });
         } catch (error: any) {
           logger.warn(`⚠️ News tool failed: ${error.message}`);
-          toolResults.push({ tool: 'get_stock_news', result: `Error: ${error.message}` });
+          toolResults.push({ tool: 'news_tool', result: `Error: ${error.message}` });
         }
       }
 
@@ -84,6 +111,7 @@ Provide:
       logger.info(`📝 News Analyst building prompt...`);
       const prompt = await this.promptTemplate.format({
         ticker: state.ticker,
+        assetType: assetType,
         date: state.date,
         marketAnalysis: marketContext,
       });

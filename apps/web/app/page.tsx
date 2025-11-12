@@ -6,6 +6,7 @@ import { apiClient } from '../lib/api-client';
 import AgentCard from '../components/AgentCard';
 import DecisionCard from '../components/DecisionCard';
 import AnalysisHistory from '../components/AnalysisHistory';
+import { detectAssetType, formatReport, getAgentEmoji, type AssetInfo } from '../lib/assetUtils';
 
 interface AgentStatus {
   name: string;
@@ -33,14 +34,20 @@ export default function Home() {
   const [error, setError] = useState('');
   const [backendOnline, setBackendOnline] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [agents, setAgents] = useState<AgentStatus[]>([
-    { name: 'Market Analyst', icon: '📊', status: 'pending' },
-    { name: 'News Analyst', icon: '📰', status: 'pending' },
-    { name: 'Fundamentals Analyst', icon: '💼', status: 'pending' },
-    { name: 'Bull Researcher', icon: '🐂', status: 'pending' },
-    { name: 'Bear Researcher', icon: '🐻', status: 'pending' },
-    { name: 'Trader', icon: '💰', status: 'pending' },
-  ]);
+  const [assetInfo, setAssetInfo] = useState<AssetInfo | null>(null);
+  const getInitialAgents = (assetType: string = 'stock'): AgentStatus[] => {
+    const type = assetType as 'stock' | 'crypto' | 'forex';
+    return [
+      { name: 'Market Analyst', icon: getAgentEmoji('Market Analyst', type), status: 'pending' },
+      { name: 'News Analyst', icon: getAgentEmoji('News Analyst', type), status: 'pending' },
+      { name: 'Fundamentals Analyst', icon: getAgentEmoji('Fundamentals Analyst', type), status: 'pending' },
+      { name: 'Bull Researcher', icon: getAgentEmoji('Bull Researcher', type), status: 'pending' },
+      { name: 'Bear Researcher', icon: getAgentEmoji('Bear Researcher', type), status: 'pending' },
+      { name: 'Trader', icon: getAgentEmoji('Trader', type), status: 'pending' },
+    ];
+  };
+
+  const [agents, setAgents] = useState<AgentStatus[]>(getInitialAgents());
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [analysisStartTime, setAnalysisStartTime] = useState<number>(0);
   const pollIntervalRef = useRef<NodeJS.Timeout>();
@@ -66,8 +73,12 @@ export default function Home() {
     setActiveTab(null);
     setAnalysisStartTime(Date.now());
     
-    // Reset agents
-    setAgents(prev => prev.map(a => ({ ...a, status: 'pending' as const, report: undefined, startTime: undefined, endTime: undefined })));
+    // Detect asset type and update agent icons
+    const currentAssetInfo = detectAssetType(ticker);
+    setAssetInfo(currentAssetInfo);
+    
+    // Reset agents with appropriate icons for asset type
+    setAgents(getInitialAgents(currentAssetInfo.type));
 
     try {
       const response = await apiClient.startAnalysis({
@@ -187,7 +198,9 @@ export default function Home() {
       result.state.traderDecision?.reasoning
     ];
     
-    return reports[index] || 'No report available';
+    const rawReport = reports[index] || 'No report available';
+    // Format report to remove markdown and make it natural
+    return formatReport(rawReport);
   };
 
   const handleSelectHistoryItem = async (id: string) => {
@@ -299,25 +312,60 @@ export default function Home() {
               <input
                 type="text"
                 value={ticker}
-                onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                placeholder="Enter stock ticker (e.g., AAPL, TSLA, NVDA)"
+                onChange={(e) => {
+                  const value = e.target.value.toUpperCase();
+                  setTicker(value);
+                  if (value) {
+                    setAssetInfo(detectAssetType(value));
+                  } else {
+                    setAssetInfo(null);
+                  }
+                }}
+                placeholder="Enter ticker (e.g., AAPL, BTC-USD, EURUSD)"
                 className="w-full px-6 py-4 pr-36 text-lg bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 disabled={loading}
               />
               <motion.button
                 type="submit"
                 disabled={loading || !ticker.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-8 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all duration-200"
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-8 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 whileHover={{ 
-                  boxShadow: '0 20px 40px -12px rgba(168, 85, 247, 0.5)',
-                  backgroundImage: 'linear-gradient(to right, rgb(147, 51, 234), rgb(59, 130, 246))'
+                  boxShadow: '0 20px 40px -12px rgba(168, 85, 247, 0.6)'
                 }}
                 whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2 }}
+                style={{
+                  boxShadow: '0 10px 30px -12px rgba(168, 85, 247, 0.3)'
+                }}
               >
                 {loading ? 'Analyzing...' : 'Analyze'}
               </motion.button>
             </div>
+
+            {/* Asset Type Badge - Small tag under search bar */}
+            <AnimatePresence>
+              {assetInfo && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  className="mt-2 flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-full text-xs font-medium"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, ${
+                      assetInfo.type === 'stock' ? 'rgba(147, 51, 234, 0.2), rgba(59, 130, 246, 0.2)' :
+                      assetInfo.type === 'crypto' ? 'rgba(249, 115, 22, 0.2), rgba(251, 191, 36, 0.2)' :
+                      'rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2)'
+                    })`,
+                    color: assetInfo.type === 'stock' ? 'rgb(167, 139, 250)' :
+                           assetInfo.type === 'crypto' ? 'rgb(251, 191, 36)' :
+                           'rgb(52, 211, 153)'
+                  }}
+                >
+                  <span>{assetInfo.icon}</span>
+                  <span className="uppercase font-semibold">{assetInfo.type}</span>
+                  <span className="opacity-60">• {assetInfo.displayName}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <AnimatePresence>
               {error && (
@@ -423,7 +471,7 @@ export default function Home() {
                         <p className="text-sm text-white/50">Comprehensive analysis report</p>
                       </div>
                     </div>
-                    <div className="bg-black/40 rounded-xl p-8 text-white/90 leading-relaxed whitespace-pre-wrap font-light text-sm border border-white/10">
+                    <div className="bg-black/40 rounded-xl p-8 text-white/90 leading-relaxed whitespace-pre-wrap report-content text-sm border border-white/10">
                       {agents.find(a => a.name === activeTab)?.report || 'Loading report...'}
                     </div>
                   </div>
