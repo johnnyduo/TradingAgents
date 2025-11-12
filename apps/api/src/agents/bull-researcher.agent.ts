@@ -36,10 +36,14 @@ Guidelines:
 - Use concrete data from analyst reports
 - Identify multiple bullish themes
 - Address potential counterarguments preemptively
-- Build a compelling case for investment
-- Quantify potential upside when possible
+- NO markdown formatting (**, ###, -)
+- Use clear section titles with colons
+- Write in complete paragraphs with specific numbers
 
-You will engage in a debate with the Bear Researcher. Prepare strong arguments.`,
+FORMATTING:
+- Section titles: "Bullish Thesis:", "Key Catalysts:", etc.
+- Separate sections with blank lines
+- Include specific targets and percentages`,
       ],
       [
         'human',
@@ -54,12 +58,21 @@ News Analysis:
 Fundamental Analysis:
 {fundamentalAnalysis}
 
-Create a comprehensive bullish thesis including:
-1. Key bullish arguments (ranked by strength)
-2. Catalysts for price appreciation
-3. Risk/reward assessment (bullish perspective)
-4. Target price or return expectation
-5. Counter-arguments to bearish concerns`,
+Structure your response:
+
+Bullish Thesis:
+[Main bullish arguments with specific data]
+
+Key Catalysts:
+[Events and factors that support upside]
+
+Growth Opportunities:
+[Potential for appreciation with targets]
+
+Risk Assessment:
+[Acknowledge risks but emphasize upside potential]
+
+No markdown symbols, just natural paragraphs.`,
       ],
     ]);
   }

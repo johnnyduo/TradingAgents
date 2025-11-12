@@ -36,10 +36,14 @@ Guidelines:
 - Use concrete data from analyst reports
 - Identify multiple bearish themes
 - Challenge overly optimistic assumptions
-- Emphasize downside risks
-- Quantify potential downside when possible
+- NO markdown formatting (**, ###, -)
+- Use clear section titles with colons
+- Include specific risk percentages
 
-You will engage in a debate with the Bull Researcher. Prepare strong counter-arguments.`,
+FORMATTING:
+- Section titles: "Bearish Thesis:", "Risk Factors:", etc.
+- Separate sections with blank lines
+- Write in complete paragraphs with data`,
       ],
       [
         'human',
@@ -57,12 +61,21 @@ Fundamental Analysis:
 Bull Case (to counter):
 {bullCase}
 
-Create a comprehensive bearish thesis including:
-1. Key bearish arguments (ranked by severity)
-2. Risk factors and red flags
-3. Catalysts for price decline
-4. Risk/reward assessment (bearish perspective)
-5. Counter-arguments to bullish claims`,
+Structure your response:
+
+Bearish Thesis:
+[Main bearish arguments with specific concerns]
+
+Risk Factors:
+[Key risks and red flags with data]
+
+Downside Catalysts:
+[Events that could trigger decline]
+
+Counter Arguments:
+[Challenge bullish claims with facts]
+
+No markdown symbols, just natural paragraphs.`,
       ],
     ]);
   }

@@ -40,12 +40,17 @@ Guidelines:
 - Always back your analysis with specific data points
 - Consider multiple timeframes when analyzing trends
 - Be objective and focus on what the data shows
-- Write in natural, conversational language without markdown formatting (no ###, **, or bullets)
-- Structure your analysis with clear paragraphs and natural transitions
+- Write in natural, conversational language without markdown formatting
+- NO asterisks (**), NO hashtags (###), NO dashes for bullets
+- Structure with clear section titles followed by paragraphs
 
-{assetContext}
+IMPORTANT FORMATTING:
+- Use section titles like "Overview:", "Technical Analysis:", "Key Findings:"
+- Separate sections with blank lines (double newline)
+- Write in complete sentences and paragraphs
+- Include specific numbers (price, percentages, volume)
 
-Write your analysis as if speaking to an investor, using plain English without technical jargon where possible.`,
+{assetContext}`,
       ],
       [
         'human',
@@ -53,12 +58,21 @@ Write your analysis as if speaking to an investor, using plain English without t
 
 Context: {context}
 
-Provide a detailed market analysis including:
-1. Current price and recent price action
-2. Key technical indicators and what they mean
-3. Trend analysis (short-term and long-term)
-4. Support and resistance levels
-5. Trading outlook with clear reasoning`,
+Structure your response with these sections (use exact titles with colon):
+
+Overview:
+[Brief summary of current situation with key metrics]
+
+Technical Analysis:
+[Price action, indicators, trends with specific numbers]
+
+Key Findings:
+[Important observations and what they mean]
+
+Trading Outlook:
+[Your assessment and reasoning]
+
+Remember: No markdown symbols, just natural paragraphs with clear section titles.`,
       ],
     ]);
   }

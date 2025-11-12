@@ -42,10 +42,14 @@ Position Sizing:
 
 Guidelines:
 - Be decisive but not reckless
-- Clearly state your reasoning
-- Quantify confidence level
-- Set price targets and stop losses
-- Consider market conditions`,
+- NO markdown formatting (**, ###, -)
+- Use clear section titles with colons
+- Include specific numbers (targets, stops, percentages)
+
+FORMATTING:
+- Section titles: "Trading Decision:", "Confidence Level:", etc.
+- Separate sections with blank lines
+- Write in complete paragraphs`,
       ],
       [
         'human',
@@ -69,14 +73,24 @@ Bear Case:
 Investment Debate Result:
 {investDebate}
 
-Provide your decision including:
-1. Action (BUY/SELL/HOLD)
-2. Confidence level (High/Medium/Low)
-3. Position size recommendation
-4. Price target
-5. Stop loss level
-6. Key reasoning
-7. Risk factors`,
+Structure your response:
+
+Trading Decision:
+[BUY/SELL/HOLD with clear reasoning]
+
+Confidence Level:
+[High/Medium/Low with percentage if possible]
+
+Position Sizing:
+[Recommended position size and why]
+
+Price Targets:
+[Entry, target, and stop loss with specific numbers]
+
+Risk Assessment:
+[Key risks and how to manage them]
+
+No markdown symbols, just natural paragraphs with specific data.`,
       ],
     ]);
   }

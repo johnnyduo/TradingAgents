@@ -36,12 +36,15 @@ Your role is to:
 Guidelines:
 - Adapt your analysis based on the asset type
 - Focus on recent, relevant news
-- Distinguish between short-term noise and long-term trends
-- Consider the timing and recency of news
-- Identify both opportunities and risks
-- Write in natural, conversational language without markdown formatting (no ###, **, or bullets)
+- Write in natural, conversational language
+- NO markdown symbols (**, ###, -)
+- Use clear section titles with colons
+- Include specific sentiment scores and metrics
 
-Write your analysis as if speaking to an investor, using plain English.`,
+FORMATTING:
+- Section titles: "News Summary:", "Sentiment Analysis:", etc.
+- Separate sections with blank lines
+- Use complete paragraphs with specific data`,
       ],
       [
         'human',
@@ -50,12 +53,21 @@ Write your analysis as if speaking to an investor, using plain English.`,
 Context from previous analyses:
 Market Analysis: {marketAnalysis}
 
-Provide:
-1. Summary of recent news and events
-2. Overall sentiment assessment
-3. Key catalysts (positive and negative)
-4. Potential market impact
-5. Risk factors from news`,
+Structure your response with these sections:
+
+News Summary:
+[Brief overview of recent news and events]
+
+Sentiment Analysis:
+[Overall sentiment with specific scores/indicators]
+
+Key Catalysts:
+[Important events and their potential impact]
+
+Market Impact:
+[How news may affect price and trading]
+
+No markdown formatting, just natural paragraphs with section titles.`,
       ],
     ]);
   }

@@ -6,6 +6,7 @@ import { apiClient } from '../lib/api-client';
 import AgentCard from '../components/AgentCard';
 import DecisionCard from '../components/DecisionCard';
 import AnalysisHistory from '../components/AnalysisHistory';
+import ReportRenderer from '../components/ReportRenderer';
 import { detectAssetType, formatReport, getAgentEmoji, type AssetInfo } from '../lib/assetUtils';
 
 interface AgentStatus {
@@ -462,18 +463,11 @@ export default function Home() {
               <div className="p-8">
                 {activeTab ? (
                   <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                    <div className="flex items-center gap-3 mb-6">
-                      <span className="text-3xl">
-                        {agents.find(a => a.name === activeTab)?.icon}
-                      </span>
-                      <div>
-                        <h3 className="text-xl font-bold text-white">{activeTab}</h3>
-                        <p className="text-sm text-white/50">Comprehensive analysis report</p>
-                      </div>
-                    </div>
-                    <div className="bg-black/40 rounded-xl p-8 text-white/90 leading-relaxed whitespace-pre-wrap report-content text-sm border border-white/10">
-                      {agents.find(a => a.name === activeTab)?.report || 'Loading report...'}
-                    </div>
+                    <ReportRenderer
+                      content={agents.find(a => a.name === activeTab)?.report || 'Loading report...'}
+                      agentName={activeTab}
+                      agentIcon={agents.find(a => a.name === activeTab)?.icon || '📋'}
+                    />
                   </div>
                 ) : (
                   <div className="text-center py-16">

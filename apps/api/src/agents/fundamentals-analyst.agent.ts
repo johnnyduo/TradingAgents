@@ -43,11 +43,14 @@ Key metrics to consider:
 Guidelines:
 - Use quantitative data to support conclusions
 - Consider both absolute values and relative comparisons
-- Identify strengths and weaknesses
-- Assess long-term investment viability
-- Note any red flags in financials
+- NO markdown formatting (**, ###, -)
+- Use clear section titles with colons
+- Include specific metrics and ratios
 
-Format your response as a comprehensive fundamental analysis report.`,
+FORMATTING:
+- Section titles: "Company Overview:", "Valuation:", etc.
+- Separate sections with blank lines
+- Write in complete paragraphs with numbers`,
       ],
       [
         'human',
@@ -57,12 +60,24 @@ Context from previous analyses:
 Market Analysis: {marketAnalysis}
 News Analysis: {newsAnalysis}
 
-Provide:
-1. Company overview and business model
-2. Valuation assessment (fairly valued, overvalued, undervalued)
-3. Financial health analysis
-4. Growth prospects
-5. Investment quality rating`,
+Structure your response:
+
+Company Overview:
+[Business model and competitive position]
+
+Valuation Analysis:
+[P/E, PEG, and valuation assessment with numbers]
+
+Financial Health:
+[Revenue, margins, debt with specific metrics]
+
+Growth Prospects:
+[Growth rates and future potential]
+
+Investment Quality:
+[Overall rating and key takeaways]
+
+No markdown symbols, just natural paragraphs with data.`,
       ],
     ]);
   }
