@@ -23,6 +23,7 @@
     "@langchain/langgraph": "^0.2.25",
     "@langchain/openai": "^0.3.16",
     "@prisma/client": "^5.7.0",
+    "@supabase/supabase-js": "^2.81.1",
     "@tradingagents/types": "workspace:*",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
