@@ -38,11 +38,8 @@ export abstract class BaseAgent {
     // Initialize prompt template
     this.promptTemplate = this.createPromptTemplate();
 
-    // Bind tools to LLM
+    // Setup tools (available for agent to use)
     this.setupTools();
-    if (this.tools.length > 0) {
-      this.llm = this.llm.bind({ tools: this.tools }) as BaseChatModel;
-    }
 
     logger.info(`✅ Initialized agent: ${this.name}`);
   }

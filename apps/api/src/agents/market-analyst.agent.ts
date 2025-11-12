@@ -70,21 +70,55 @@ Provide a detailed technical analysis including:
       this.updateStatus('running');
       logger.info(`🔍 Market Analyst analyzing ${state.ticker}`);
 
+      // Manually gather market data using tools
+      const toolResults: any[] = [];
+      
+      // Get current price
+      try {
+        const priceResult = await this.tools[0].invoke({ ticker: state.ticker });
+        toolResults.push({ tool: 'get_stock_price', result: priceResult });
+      } catch (error: any) {
+        logger.warn(`Price fetch failed: ${error.message}`);
+      }
+
+      // Get historical prices
+      try {
+        const histResult = await this.tools[1].invoke({ ticker: state.ticker, outputsize: 'compact' });
+        toolResults.push({ tool: 'get_historical_prices', result: histResult });
+      } catch (error: any) {
+        logger.warn(`Historical fetch failed: ${error.message}`);
+      }
+
+      // Calculate SMA
+      try {
+        const smaResult = await this.tools[2].invoke({ ticker: state.ticker, interval: 'daily', timePeriod: 20, seriesType: 'close' });
+        toolResults.push({ tool: 'calculate_sma', result: smaResult });
+      } catch (error: any) {
+        logger.warn(`SMA calculation failed: ${error.message}`);
+      }
+
+      // Calculate RSI
+      try {
+        const rsiResult = await this.tools[3].invoke({ ticker: state.ticker, interval: 'daily', timePeriod: 14, seriesType: 'close' });
+        toolResults.push({ tool: 'calculate_rsi', result: rsiResult });
+      } catch (error: any) {
+        logger.warn(`RSI calculation failed: ${error.message}`);
+      }
+
+      // Prepare context with tool results
+      const dataContext = toolResults.map(tr => `${tr.tool}: ${tr.result}`).join('\n\n');
+
       const prompt = await this.promptTemplate.format({
         ticker: state.ticker,
         date: state.date,
-        context: state.context || 'No additional context provided.',
+        context: `${state.context || ''}\n\nMarket Data:\n${dataContext}`,
       });
 
-      // Invoke LLM with tools
+      // Invoke LLM to analyze the data
       const response = await this.llm.invoke(prompt);
-
-      // Extract content and tool calls
       const content = response.content as string;
-      const toolCalls = (response as any).tool_calls || [];
 
       logger.info(`✅ Market Analyst completed analysis for ${state.ticker}`);
-      logger.debug(`Generated ${toolCalls.length} tool calls`);
 
       this.updateStatus('completed');
 
@@ -93,7 +127,7 @@ Provide a detailed technical analysis including:
         marketAnalysis: {
           agent: this.name,
           report: content,
-          toolCalls: this.formatToolCalls(toolCalls),
+          toolCalls: toolResults,
           timestamp: new Date().toISOString(),
         },
         messages: [

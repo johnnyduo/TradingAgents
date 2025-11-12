@@ -1,25 +1,81 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { apiClient } from '../lib/api-client';
 
 export default function Home() {
   const [ticker, setTicker] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
+  const [analysisId, setAnalysisId] = useState<string | null>(null);
+  const [backendOnline, setBackendOnline] = useState(false);
+
+  // Check backend health on mount
+  useEffect(() => {
+    apiClient.health()
+      .then(() => setBackendOnline(true))
+      .catch(() => setBackendOnline(false));
+  }, []);
+
+  // Poll for analysis status
+  useEffect(() => {
+    if (!analysisId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const statusRes = await apiClient.getAnalysisStatus(analysisId);
+        
+        if (statusRes.data?.status === 'completed' || statusRes.data?.status === 'failed') {
+          clearInterval(interval);
+          
+          // Fetch full result
+          const resultRes = await apiClient.getAnalysisResult(analysisId);
+          setResult(resultRes.data);
+          setLoading(false);
+        }
+      } catch (err: any) {
+        console.error('Status poll error:', err);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [analysisId]);
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setResult(null);
+    setAnalysisId(null);
 
     try {
-      // TODO: Implement API call
-      setError('API not yet connected. Backend server must be running on port 3001');
+      // For demo purposes, skip auth and use direct API call
+      const response = await fetch('http://localhost:3001/api/v1/analysis/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ticker: ticker,
+          date: new Date().toISOString().split('T')[0],
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Analysis failed to start');
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.data?.id) {
+        setAnalysisId(data.data.id);
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (err: any) {
       setError(err.message || 'Analysis failed');
-    } finally {
       setLoading(false);
     }
   };
@@ -121,17 +177,118 @@ export default function Home() {
             </ul>
           </div>
 
-          {/* Status */}
-          <div className="mt-6 text-center text-sm text-gray-400">
-            <p>
-              💡 Make sure the backend API is running on{' '}
-              <code className="bg-gray-700 px-2 py-1 rounded">http://localhost:3001</code>
-            </p>
-            <p className="mt-2">
-              Run: <code className="bg-gray-700 px-2 py-1 rounded">pnpm dev</code> from project root
-            </p>
+          {/* Backend Status */}
+          <div className="mt-6 text-center text-sm">
+            <div className="flex items-center justify-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${backendOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className={backendOnline ? 'text-green-400' : 'text-red-400'}>
+                Backend {backendOnline ? 'Online' : 'Offline'}
+              </span>
+            </div>
+            {!backendOnline && (
+              <p className="mt-2 text-gray-400">
+                Run: <code className="bg-gray-700 px-2 py-1 rounded">pnpm dev</code> from project root
+              </p>
+            )}
           </div>
         </div>
+
+        {/* Results Display */}
+        {result && (
+          <div className="max-w-4xl mx-auto mt-8 bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-700">
+            <h2 className="text-2xl font-semibold text-white mb-6">
+              Analysis Results for {result.ticker}
+            </h2>
+
+            {/* Final Decision */}
+            <div className={`p-6 rounded-lg mb-6 ${
+              result.decision === 'buy' ? 'bg-green-900/30 border border-green-700' :
+              result.decision === 'sell' ? 'bg-red-900/30 border border-red-700' :
+              'bg-yellow-900/30 border border-yellow-700'
+            }`}>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-3xl">
+                  {result.decision === 'buy' ? '📈' : result.decision === 'sell' ? '📉' : '⏸️'}
+                </span>
+                <h3 className="text-2xl font-bold text-white uppercase">
+                  {result.decision}
+                </h3>
+              </div>
+              <p className="text-gray-300 text-sm">
+                Status: {result.status} • Completed: {new Date(result.completedAt).toLocaleString()}
+              </p>
+            </div>
+
+            {/* Agent Reports */}
+            {result.state && (
+              <div className="space-y-4">
+                {result.state.marketAnalysis && (
+                  <div className="bg-gray-700/50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-blue-400 mb-2">📊 Market Analysis</h4>
+                    <p className="text-gray-300 text-sm whitespace-pre-wrap">
+                      {result.state.marketAnalysis.report}
+                    </p>
+                  </div>
+                )}
+
+                {result.state.newsAnalysis && (
+                  <div className="bg-gray-700/50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-purple-400 mb-2">📰 News Analysis</h4>
+                    <p className="text-gray-300 text-sm whitespace-pre-wrap">
+                      {result.state.newsAnalysis.report}
+                    </p>
+                  </div>
+                )}
+
+                {result.state.fundamentalAnalysis && (
+                  <div className="bg-gray-700/50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-green-400 mb-2">💼 Fundamental Analysis</h4>
+                    <p className="text-gray-300 text-sm whitespace-pre-wrap">
+                      {result.state.fundamentalAnalysis.report}
+                    </p>
+                  </div>
+                )}
+
+                {result.state.bullCase && (
+                  <div className="bg-gray-700/50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-green-400 mb-2">🐂 Bull Case</h4>
+                    <p className="text-gray-300 text-sm whitespace-pre-wrap">
+                      {result.state.bullCase.thesis}
+                    </p>
+                  </div>
+                )}
+
+                {result.state.bearCase && (
+                  <div className="bg-gray-700/50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-red-400 mb-2">🐻 Bear Case</h4>
+                    <p className="text-gray-300 text-sm whitespace-pre-wrap">
+                      {result.state.bearCase.thesis}
+                    </p>
+                  </div>
+                )}
+
+                {result.state.traderDecision && (
+                  <div className="bg-gray-700/50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-yellow-400 mb-2">💰 Trader Decision</h4>
+                    <p className="text-gray-300 text-sm whitespace-pre-wrap">
+                      {result.state.traderDecision.reasoning}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                setResult(null);
+                setAnalysisId(null);
+              }}
+              className="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            >
+              ← Back to Analysis
+            </button>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="text-center mt-16 text-gray-500 text-sm">

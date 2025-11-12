@@ -62,15 +62,26 @@ Provide:
       this.updateStatus('running');
       logger.info(`📰 News Analyst analyzing ${state.ticker}`);
 
+      // Fetch news data
+      const toolResults: any[] = [];
+      try {
+        const newsResult = await this.tools[0].invoke({ ticker: state.ticker, limit: 10 });
+        toolResults.push({ tool: 'get_stock_news', result: newsResult });
+      } catch (error: any) {
+        logger.warn(`News fetch failed: ${error.message}`);
+        toolResults.push({ tool: 'get_stock_news', result: `Error: ${error.message}` });
+      }
+
+      const dataContext = toolResults.map(tr => `${tr.tool}: ${tr.result}`).join('\n\n');
+
       const prompt = await this.promptTemplate.format({
         ticker: state.ticker,
         date: state.date,
         marketAnalysis: JSON.stringify(state.marketAnalysis || {}),
       });
 
-      const response = await this.llm.invoke(prompt);
+      const response = await this.llm.invoke(`${prompt}\n\nNews Data:\n${dataContext}`);
       const content = response.content as string;
-      const toolCalls = (response as any).tool_calls || [];
 
       logger.info(`✅ News Analyst completed for ${state.ticker}`);
       this.updateStatus('completed');
@@ -80,7 +91,7 @@ Provide:
         newsAnalysis: {
           agent: this.name,
           report: content,
-          toolCalls: this.formatToolCalls(toolCalls),
+          toolCalls: toolResults,
           timestamp: new Date().toISOString(),
         },
         messages: [

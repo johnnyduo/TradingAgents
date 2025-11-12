@@ -72,6 +72,18 @@ Provide:
       this.updateStatus('running');
       logger.info(`💼 Fundamentals Analyst analyzing ${state.ticker}`);
 
+      // Fetch fundamentals data
+      const toolResults: any[] = [];
+      try {
+        const fundResult = await this.tools[0].invoke({ ticker: state.ticker });
+        toolResults.push({ tool: 'get_company_fundamentals', result: fundResult });
+      } catch (error: any) {
+        logger.warn(`Fundamentals fetch failed: ${error.message}`);
+        toolResults.push({ tool: 'get_company_fundamentals', result: `Error: ${error.message}` });
+      }
+
+      const dataContext = toolResults.map(tr => `${tr.tool}: ${tr.result}`).join('\n\n');
+
       const prompt = await this.promptTemplate.format({
         ticker: state.ticker,
         date: state.date,
@@ -79,9 +91,8 @@ Provide:
         newsAnalysis: JSON.stringify(state.newsAnalysis || {}),
       });
 
-      const response = await this.llm.invoke(prompt);
+      const response = await this.llm.invoke(`${prompt}\n\nFundamentals Data:\n${dataContext}`);
       const content = response.content as string;
-      const toolCalls = (response as any).tool_calls || [];
 
       logger.info(`✅ Fundamentals Analyst completed for ${state.ticker}`);
       this.updateStatus('completed');
@@ -91,7 +102,7 @@ Provide:
         fundamentalAnalysis: {
           agent: this.name,
           report: content,
-          toolCalls: this.formatToolCalls(toolCalls),
+          toolCalls: toolResults,
           timestamp: new Date().toISOString(),
         },
         messages: [

@@ -17,11 +17,12 @@ export default (io: SocketIOServer) => {
   const router = Router();
   const analysisService = new AnalysisService(io);
 
-  // Start new analysis
-  router.post('/start', authenticate, strictRateLimiter, async (req, res, next) => {
+  // Start new analysis (auth disabled for demo)
+  router.post('/start', strictRateLimiter, async (req, res, next) => {
     try {
       const validated = analysisSchema.parse(req.body);
-      const userId = (req as any).user.id;
+      // For demo: use fixed userId or get from auth
+      const userId = (req as any).user?.id || 'demo-user';
 
       logger.info(`Starting analysis for ${validated.ticker} by user ${userId}`);
 

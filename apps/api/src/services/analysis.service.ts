@@ -25,6 +25,19 @@ export class AnalysisService {
     // Generate room ID for WebSocket communication
     const socketRoomId = nanoid();
 
+    // Ensure demo user exists
+    if (userId === 'demo-user') {
+      await prisma.user.upsert({
+        where: { id: 'demo-user' },
+        update: {},
+        create: {
+          id: 'demo-user',
+          email: 'demo@tradingagents.com',
+          passwordHash: 'demo', // Not used for demo
+        },
+      });
+    }
+
     // Create analysis result record
     const result = await prisma.analysisResult.create({
       data: {
