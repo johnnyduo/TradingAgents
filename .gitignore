@@ -4,9 +4,12 @@ env/
 __pycache__/
 .DS_Store
 *.csv
-src/
+# Python src folder only (not React src)
+/src/
 eval_results/
 eval_data/
 *.egg-info/
 .env
 node_modules
+dist/
+logs/
