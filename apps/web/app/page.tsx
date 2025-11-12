@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '../lib/api-client';
+import AgentCard from '../components/AgentCard';
+import DecisionCard from '../components/DecisionCard';
+import AnalysisHistory from '../components/AnalysisHistory';
 
 interface AgentStatus {
   name: string;
@@ -18,6 +22,8 @@ interface AnalysisResult {
   decision: string;
   status: string;
   state?: any;
+  createdAt: string;
+  completedAt?: string;
 }
 
 export default function Home() {
@@ -26,6 +32,7 @@ export default function Home() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState('');
   const [backendOnline, setBackendOnline] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [agents, setAgents] = useState<AgentStatus[]>([
     { name: 'Market Analyst', icon: '📊', status: 'pending' },
     { name: 'News Analyst', icon: '📰', status: 'pending' },
@@ -72,6 +79,8 @@ export default function Home() {
         throw new Error('No analysis ID returned');
       }
 
+      const analysisId = response.data.id;
+
       // Start agent at index 0
       updateAgentStatus(0, 'running');
       let currentAgent = 0;
@@ -84,14 +93,14 @@ export default function Home() {
         attempts++;
 
         if (attempts > maxAttempts) {
-          clearInterval(pollIntervalRef.current);
+          clearInterval(pollIntervalRef.current!);
           setError('Analysis timed out. Please try again.');
           setLoading(false);
           return;
         }
 
         try {
-          const statusRes = await apiClient.getAnalysisStatus(response.data.id);
+          const statusRes = await apiClient.getAnalysisStatus(analysisId);
 
           // Update agent status based on elapsed time (approximate)
           const elapsed = attempts * 2; // seconds
@@ -122,22 +131,26 @@ export default function Home() {
           }
 
           if (statusRes.data?.status === 'completed') {
-            clearInterval(pollIntervalRef.current);
-            const finalResult = await apiClient.getAnalysisResult(response.data.id);
-            setResult(finalResult.data);
+            clearInterval(pollIntervalRef.current!);
+            const finalResult = await apiClient.getAnalysisResult(analysisId);
             
-            // Mark all as completed and populate reports
-            setAgents(prev => prev.map((a, idx) => ({
-              ...a,
-              status: 'completed' as const,
-              endTime: Date.now(),
-              report: getAgentReport(finalResult.data, idx)
-            })));
+            if (finalResult.data) {
+              setResult(finalResult.data);
+              
+              // Mark all agents as completed
+              setAgents(prev => prev.map((a, idx) => ({
+                ...a,
+                status: 'completed' as const,
+                endTime: Date.now(),
+                report: getAgentReport(finalResult.data!, idx)
+              })));
+              
+              setActiveTab(agents[0].name); // Auto-select first tab
+            }
             
             setLoading(false);
-            setActiveTab(agents[0].name); // Auto-select first tab
           } else if (statusRes.data?.status === 'failed') {
-            clearInterval(pollIntervalRef.current);
+            clearInterval(pollIntervalRef.current!);
             setError('Analysis failed. Please try again.');
             setLoading(false);
           }
@@ -177,6 +190,29 @@ export default function Home() {
     return reports[index] || 'No report available';
   };
 
+  const handleSelectHistoryItem = async (id: string) => {
+    setShowHistory(false);
+    setLoading(true);
+    setError('');
+    try {
+      const response = await apiClient.getAnalysisResult(id);
+      if (response.data) {
+        setResult(response.data);
+        setTicker(response.data.ticker);
+        setAgents(prev => prev.map((a, idx) => ({
+          ...a,
+          status: 'completed' as const,
+          report: getAgentReport(response.data!, idx)
+        })));
+        setActiveTab(agents[0].name);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to load analysis');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (pollIntervalRef.current) {
@@ -185,230 +221,162 @@ export default function Home() {
     };
   }, []);
 
+  const analysisDuration = result?.completedAt && result?.createdAt
+    ? Math.floor((new Date(result.completedAt).getTime() - new Date(result.createdAt).getTime()) / 1000)
+    : 0;
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div 
+          className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-purple-500/10 rounded-full blur-3xl"
+          animate={{ x: [0, 100, 0], y: [0, 50, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div 
+          className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-blue-500/10 rounded-full blur-3xl"
+          animate={{ x: [0, -100, 0], y: [0, -50, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      </div>
+
       {/* Header */}
-      <header className="border-b border-white/10 bg-black/30 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30">
-                <span className="text-2xl">🤖</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">Trading Agents</h1>
-                <p className="text-xs text-blue-300/80">AI-Powered Multi-Agent Investment Analysis</p>
-              </div>
+      <motion.header 
+        className="relative z-10 border-b border-white/10 bg-slate-900/50 backdrop-blur-xl"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+      >
+        <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <motion.div 
+              className="text-4xl"
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              📈
+            </motion.div>
+            <div>
+              <h1 className="text-3xl font-bold text-white tracking-tight">Trading Agents</h1>
+              <p className="text-sm text-slate-400 mt-1">AI-Powered Stock Analysis</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/50 border border-slate-700">
+              <motion.div 
+                className={`w-2 h-2 rounded-full ${backendOnline ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                animate={backendOnline ? { scale: [1, 1.3, 1], opacity: [1, 0.7, 1] } : {}}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <span className="text-sm text-slate-300">{backendOnline ? 'Online' : 'Offline'}</span>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
-                backendOnline ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-              }`}>
-                <span className={`w-2 h-2 rounded-full ${backendOnline ? 'bg-green-400' : 'bg-red-400'}`}></span>
-                {backendOnline ? 'Online' : 'Offline'}
-              </div>
-            </div>
+            <motion.button
+              onClick={() => setShowHistory(!showHistory)}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-shadow"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span>📜</span>
+              <span>History</span>
+            </motion.button>
           </div>
         </div>
-      </header>
+      </motion.header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Search Bar */}
-        <div className="mb-8">
-          <form onSubmit={handleAnalyze} className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-2xl">
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl">🔍</div>
-                <input
-                  type="text"
-                  value={ticker}
-                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                  placeholder="Enter stock ticker (e.g., AAPL, TSLA, GOOGL, NVDA)"
-                  className="w-full pl-16 pr-6 py-4 rounded-xl bg-white/10 text-white placeholder-white/40 border border-white/20 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 text-lg font-medium transition-all"
-                  disabled={loading}
-                />
-              </div>
-              <button
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-12">
+        {/* Search Section */}
+        <motion.div 
+          className="mb-12"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <form onSubmit={handleAnalyze} className="max-w-2xl mx-auto">
+            <div className="relative">
+              <input
+                type="text"
+                value={ticker}
+                onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                placeholder="Enter stock ticker (e.g., AAPL, TSLA, NVDA)"
+                className="w-full px-6 py-4 pr-36 text-lg bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                disabled={loading}
+              />
+              <motion.button
                 type="submit"
-                disabled={loading || !backendOnline}
-                className="px-10 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-lg transition-all shadow-lg shadow-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-105 active:scale-95"
+                disabled={loading || !ticker.trim()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-8 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-200"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                    </svg>
-                    Analyzing
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <span>⚡</span>
-                    Start Analysis
-                  </span>
-                )}
-              </button>
+                {loading ? 'Analyzing...' : 'Analyze'}
+              </motion.button>
             </div>
 
-            {error && (
-              <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-300 flex items-center gap-3">
-                <span className="text-xl">⚠️</span>
-                <span>{error}</span>
-              </div>
-            )}
+            <AnimatePresence>
+              {error && (
+                <motion.div 
+                  className="mt-4 p-4 bg-rose-500/10 border border-rose-500/50 rounded-xl text-rose-400 text-center"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </form>
-        </div>
+        </motion.div>
 
-        {/* Agent Pipeline */}
-        {loading && (
-          <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-8 shadow-2xl">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-2xl font-bold text-white mb-1">Agent Laboratory</h2>
-                  <p className="text-sm text-blue-300/70">Analyzing {ticker} with 6 specialized AI agents</p>
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 rounded-lg border border-blue-400/30">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-blue-300">
-                    {Math.floor((Date.now() - analysisStartTime) / 1000)}s elapsed
-                  </span>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {agents.map((agent, idx) => (
-                  <div
-                    key={idx}
-                    className={`relative p-6 rounded-xl border-2 transition-all duration-500 ${
-                      agent.status === 'running'
-                        ? 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-blue-400 shadow-lg shadow-blue-500/50 scale-105'
-                        : agent.status === 'completed'
-                        ? 'bg-green-500/10 border-green-500/30'
-                        : 'bg-white/5 border-white/10'
-                    }`}
-                  >
-                    {agent.status === 'running' && (
-                      <div className="absolute -top-1 -right-1">
-                        <span className="flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-                        </span>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className={`text-4xl transition-all duration-500 ${
-                        agent.status === 'running' ? 'animate-bounce' : ''
-                      }`}>
-                        {agent.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-white text-base mb-1">{agent.name}</div>
-                        <div className={`text-xs font-medium flex items-center gap-1.5 ${
-                          agent.status === 'running' ? 'text-blue-400' :
-                          agent.status === 'completed' ? 'text-green-400' :
-                          'text-gray-500'
-                        }`}>
-                          {agent.status === 'running' && (
-                            <>
-                              <span className="animate-pulse">●</span>
-                              <span>Analyzing data...</span>
-                            </>
-                          )}
-                          {agent.status === 'completed' && (
-                            <>
-                              <span>✓</span>
-                              <span>Analysis complete</span>
-                            </>
-                          )}
-                          {agent.status === 'pending' && (
-                            <>
-                              <span>○</span>
-                              <span>Waiting in queue</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {agent.status === 'running' && (
-                      <div className="mt-3">
-                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-pulse rounded-full" style={{ width: '75%' }}></div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {agent.status === 'completed' && (
-                      <div className="mt-3 flex items-center gap-2 text-xs text-green-400/70">
-                        <span>⏱️</span>
-                        <span>
-                          {agent.startTime && agent.endTime 
-                            ? `${((agent.endTime - agent.startTime) / 1000).toFixed(1)}s`
-                            : 'Completed'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+        {/* Agent Grid */}
+        <AnimatePresence>
+          {loading && (
+            <motion.div 
+              className="mb-12"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.h2 
+                className="text-2xl font-bold text-white mb-6 text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                AI Agents at Work
+              </motion.h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {agents.map((agent, index) => (
+                  <AgentCard key={agent.name} agent={agent} index={index} />
                 ))}
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-              <div className="mt-6 flex items-center justify-center gap-3 text-sm">
-                <div className="flex items-center gap-2 text-blue-300/70">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                  </svg>
-                  <span>Running comprehensive analysis...</span>
-                </div>
-                <span className="text-white/30">•</span>
-                <div className="text-blue-300/70">
-                  Typically completes in 1-2 minutes
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Decision Card */}
+        <AnimatePresence>
+          {result && result.status === 'completed' && (
+            <motion.div 
+              className="mb-12"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <DecisionCard 
+                ticker={result.ticker} 
+                decision={result.decision} 
+                duration={analysisDuration} 
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Results */}
+        {/* Results - Keep reports section */}
         {result && !loading && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Decision Card */}
-            <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-10 shadow-2xl">
-              <div className="text-center">
-                <div className="text-xs text-white/50 uppercase tracking-widest mb-3 font-bold">
-                  Final Investment Recommendation
-                </div>
-                <div className={`inline-flex items-center gap-4 px-10 py-5 rounded-2xl text-4xl font-bold mb-6 transition-all ${
-                  result.decision === 'buy' 
-                    ? 'bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-400 border-2 border-green-500 shadow-lg shadow-green-500/30' 
-                    : result.decision === 'sell' 
-                    ? 'bg-gradient-to-br from-red-500/20 to-rose-500/20 text-red-400 border-2 border-red-500 shadow-lg shadow-red-500/30'
-                    : 'bg-gradient-to-br from-yellow-500/20 to-amber-500/20 text-yellow-400 border-2 border-yellow-500 shadow-lg shadow-yellow-500/30'
-                }`}>
-                  <span className="text-5xl">
-                    {result.decision === 'buy' ? '📈' : result.decision === 'sell' ? '📉' : '↔️'}
-                  </span>
-                  <span className="uppercase tracking-tight">{result.decision}</span>
-                </div>
-                <div className="text-white/60 text-sm">
-                  Consensus decision from 6 specialized AI agents analyzing market data, news, fundamentals, and risk factors
-                </div>
-                <div className="mt-6 flex items-center justify-center gap-6 text-xs text-white/40">
-                  <div className="flex items-center gap-2">
-                    <span className="text-blue-400">✓</span> Multi-agent Analysis
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-blue-400">✓</span> Real-time Market Data
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-blue-400">✓</span> Bull vs Bear Debate
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="space-y-6"
+          >
 
             {/* Agent Reports */}
             <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
@@ -470,36 +438,33 @@ export default function Home() {
 
         {/* Empty State */}
         {!loading && !result && (
-          <div className="text-center py-24 animate-in fade-in duration-1000">
-            <div className="text-7xl mb-6 animate-bounce">🤖</div>
-            <h3 className="text-3xl font-bold text-white mb-3">AI Agent Laboratory</h3>
-            <p className="text-white/60 mb-10 max-w-2xl mx-auto text-lg leading-relaxed">
-              Enter a stock ticker above to start a comprehensive multi-agent investment analysis. 
-              Our AI agents will analyze market data, news sentiment, fundamentals, and debate investment strategies in real-time.
+          <motion.div 
+            className="text-center py-20"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <motion.div 
+              className="text-8xl mb-6"
+              animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.05, 1] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              🤖
+            </motion.div>
+            <h2 className="text-3xl font-bold text-white mb-4">Ready to Analyze</h2>
+            <p className="text-slate-400 text-lg max-w-md mx-auto">
+              Enter a stock ticker above and let our AI agents provide comprehensive investment analysis
             </p>
-            <div className="flex items-center justify-center gap-10 text-sm text-white/40">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center text-xl border border-blue-500/30">
-                  🔍
-                </div>
-                <span>6 Specialized Agents</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center text-xl border border-purple-500/30">
-                  ⚡
-                </div>
-                <span>Real-time Analysis</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 bg-pink-500/20 rounded-full flex items-center justify-center text-xl border border-pink-500/30">
-                  🎯
-                </div>
-                <span>Multi-perspective Research</span>
-              </div>
-            </div>
-          </div>
+          </motion.div>
         )}
-      </div>
-    </main>
+      </main>
+
+      {/* History Sidebar */}
+      <AnalysisHistory 
+        isOpen={showHistory} 
+        onClose={() => setShowHistory(false)} 
+        onSelectAnalysis={handleSelectHistoryItem} 
+      />
+    </div>
   );
 }
