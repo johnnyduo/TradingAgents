@@ -57,33 +57,45 @@ Provide:
     ]);
   }
 
-  async execute(state: AgentState): Promise<AgentState> {
+  async execute(state: TradingState): Promise<Partial<TradingState>> {
+    logger.info(`📰 News Analyst analyzing ${state.ticker}`);
+    
     try {
-      this.updateStatus('running');
-      logger.info(`📰 News Analyst analyzing ${state.ticker}`);
-
-      // Fetch news data
       const toolResults: any[] = [];
-      try {
-        const newsResult = await this.tools[0].invoke({ ticker: state.ticker, limit: 10 });
-        toolResults.push({ tool: 'get_stock_news', result: newsResult });
-      } catch (error: any) {
-        logger.warn(`News fetch failed: ${error.message}`);
-        toolResults.push({ tool: 'get_stock_news', result: `Error: ${error.message}` });
+      
+      // Use news tool to get sentiment data
+      if (this.tools.length > 0) {
+        try {
+          logger.info(`🔧 News Analyst invoking get_stock_news tool for ${state.ticker}...`);
+          const newsTool = this.tools[0];
+          const newsResult = await newsTool.invoke({ ticker: state.ticker, limit: 10 });
+          logger.info(`✅ News tool completed successfully`);
+          toolResults.push({ tool: 'get_stock_news', result: newsResult });
+        } catch (error: any) {
+          logger.warn(`⚠️ News tool failed: ${error.message}`);
+          toolResults.push({ tool: 'get_stock_news', result: `Error: ${error.message}` });
+        }
       }
 
+      // Prepare context with tool results
       const dataContext = toolResults.map(tr => `${tr.tool}: ${tr.result}`).join('\n\n');
+      const marketContext = state.marketAnalysis?.report || 'No market analysis available';
 
+      logger.info(`📝 News Analyst building prompt...`);
       const prompt = await this.promptTemplate.format({
         ticker: state.ticker,
         date: state.date,
-        marketAnalysis: JSON.stringify(state.marketAnalysis || {}),
+        marketAnalysis: marketContext,
       });
 
-      const response = await this.llm.invoke(`${prompt}\n\nNews Data:\n${dataContext}`);
+      // Invoke LLM to analyze the data
+      logger.info(`🤖 News Analyst invoking LLM (OpenAI)...`);
+      const response = await this.llm.invoke(prompt);
+      logger.info(`✅ LLM invocation completed`);
       const content = response.content as string;
 
-      logger.info(`✅ News Analyst completed for ${state.ticker}`);
+      logger.info(`✅ News Analyst completed analysis for ${state.ticker}`);
+
       this.updateStatus('completed');
 
       return {
@@ -113,7 +125,7 @@ Provide:
           ...(state.errors || []),
           {
             agent: this.name,
-            error: error.message,
+            message: error.message,
             timestamp: new Date().toISOString(),
           },
         ],

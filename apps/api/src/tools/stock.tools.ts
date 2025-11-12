@@ -27,6 +27,7 @@ export const getStockPriceTool = new DynamicStructuredTool({
           symbol: ticker,
           apikey: config.ALPHA_VANTAGE_API_KEY,
         },
+        timeout: 30000, // 30 second timeout
       });
 
       const quote = response.data['Global Quote'];
@@ -79,6 +80,7 @@ export const getHistoricalPricesTool = new DynamicStructuredTool({
           outputsize,
           apikey: config.ALPHA_VANTAGE_API_KEY,
         },
+        timeout: 30000, // 30 second timeout
       });
 
       const timeSeries = response.data['Time Series (Daily)'];
@@ -136,6 +138,7 @@ export const calculateSMATool = new DynamicStructuredTool({
           series_type: seriesType,
           apikey: config.ALPHA_VANTAGE_API_KEY,
         },
+        timeout: 30000, // 30 second timeout
       });
 
       const data = response.data['Technical Analysis: SMA'];
@@ -194,6 +197,7 @@ export const calculateRSITool = new DynamicStructuredTool({
           series_type: seriesType,
           apikey: config.ALPHA_VANTAGE_API_KEY,
         },
+        timeout: 30000, // 30 second timeout
       });
 
       const data = response.data['Technical Analysis: RSI'];
@@ -249,6 +253,7 @@ export const calculateMACDTool = new DynamicStructuredTool({
           series_type: seriesType,
           apikey: config.ALPHA_VANTAGE_API_KEY,
         },
+        timeout: 30000, // 30 second timeout
       });
 
       const data = response.data['Technical Analysis: MACD'];
@@ -301,6 +306,7 @@ export const getCompanyFundamentalsTool = new DynamicStructuredTool({
           symbol: ticker,
           apikey: config.ALPHA_VANTAGE_API_KEY,
         },
+        timeout: 30000, // 30 second timeout
       });
 
       const data = response.data;
@@ -364,6 +370,7 @@ export const getStockNewsTool = new DynamicStructuredTool({
           limit,
           apikey: config.ALPHA_VANTAGE_API_KEY,
         },
+        timeout: 30000, // 30 second timeout
       });
 
       const feed = response.data.feed;

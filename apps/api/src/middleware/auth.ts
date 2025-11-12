@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../db/prisma';
+import { supabase } from '../db/supabase';
 
 interface JWTPayload {
   userId: string;
@@ -24,11 +24,13 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       process.env.JWT_SECRET || 'dev-secret'
     ) as JWTPayload;
 
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-    });
+    const { data: user, error } = await supabase
+      .from('User')
+      .select('*')
+      .eq('id', decoded.userId)
+      .single();
 
-    if (!user) {
+    if (error || !user) {
       return res.status(401).json({
         success: false,
         error: 'User not found',

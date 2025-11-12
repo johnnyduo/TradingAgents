@@ -1,5 +1,5 @@
 import { Server as SocketIOServer } from 'socket.io';
-import { prisma } from '../db/prisma';
+import { supabase } from '../db/supabase';
 import { logger } from '../utils/logger';
 import { nanoid } from 'nanoid';
 import { TradingGraph } from '../graph/trading.graph';
@@ -27,20 +27,39 @@ export class AnalysisService {
 
     // Ensure demo user exists
     if (userId === 'demo-user') {
-      await prisma.user.upsert({
-        where: { id: 'demo-user' },
-        update: {},
-        create: {
-          id: 'demo-user',
-          email: 'demo@tradingagents.com',
-          passwordHash: 'demo', // Not used for demo
-        },
-      });
+      // Check if demo user exists first
+      const { data: existingUser } = await supabase
+        .from('User')
+        .select('id')
+        .eq('id', 'demo-user')
+        .single();
+      
+      if (!existingUser) {
+        // Create demo user if it doesn't exist
+        const { error: insertError } = await supabase
+          .from('User')
+          .insert({
+            id: 'demo-user',
+            email: 'demo@tradingagents.com',
+            passwordHash: 'demo', // Not used for demo
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        
+        if (insertError) {
+          logger.error('Failed to create demo user:', insertError);
+        } else {
+          logger.info('✅ Demo user created successfully');
+        }
+      }
     }
 
     // Create analysis result record
-    const result = await prisma.analysisResult.create({
-      data: {
+    const analysisId = nanoid();
+    const { data: result, error: createError } = await supabase
+      .from('AnalysisResult')
+      .insert({
+        id: analysisId,
         userId,
         ticker,
         date,
@@ -48,8 +67,15 @@ export class AnalysisService {
         state: {},
         decision: '',
         status: 'running',
-      },
-    });
+        createdAt: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (createError || !result) {
+      logger.error('Failed to create analysis result:', createError);
+      throw new Error('Failed to create analysis result');
+    }
 
     logger.info(`Created analysis ${result.id} for ${ticker} on ${date}`);
 
@@ -92,15 +118,19 @@ export class AnalysisService {
       const decision = finalState.finalDecision?.decision || 'hold';
 
       // Update database
-      await prisma.analysisResult.update({
-        where: { id: analysisId },
-        data: {
+      const { error: updateError } = await supabase
+        .from('AnalysisResult')
+        .update({
           state: finalState as any,
           decision,
           status: 'completed',
-          completedAt: new Date(),
-        },
-      });
+          completedAt: new Date().toISOString(),
+        })
+        .eq('id', analysisId);
+
+      if (updateError) {
+        logger.error('Failed to update analysis result:', updateError);
+      }
 
       // Emit completion event
       this.io.to(socketRoomId).emit('analysis:completed', {
@@ -114,13 +144,17 @@ export class AnalysisService {
       logger.error(`❌ Analysis ${analysisId} failed: ${error.message}`);
 
       // Update status to failed
-      await prisma.analysisResult.update({
-        where: { id: analysisId },
-        data: {
+      const { error: updateError } = await supabase
+        .from('AnalysisResult')
+        .update({
           status: 'failed',
-          completedAt: new Date(),
-        },
-      });
+          completedAt: new Date().toISOString(),
+        })
+        .eq('id', analysisId);
+
+      if (updateError) {
+        logger.error('Failed to update failed analysis status:', updateError);
+      }
 
       // Emit error event
       this.io.to(socketRoomId).emit('analysis:error', {
@@ -132,15 +166,16 @@ export class AnalysisService {
   }
 
   async getStatus(id: string) {
-    const result = await prisma.analysisResult.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        status: true,
-        createdAt: true,
-        completedAt: true,
-      },
-    });
+    const { data: result, error } = await supabase
+      .from('AnalysisResult')
+      .select('id, status, createdAt, completedAt')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      logger.error('Failed to get analysis status:', error);
+      return null;
+    }
 
     return result;
   }
@@ -152,12 +187,17 @@ export class AnalysisService {
   }
 
   async getResult(id: string, userId: string) {
-    const result = await prisma.analysisResult.findFirst({
-      where: {
-        id,
-        userId,
-      },
-    });
+    const { data: result, error } = await supabase
+      .from('AnalysisResult')
+      .select('*')
+      .eq('id', id)
+      .eq('userId', userId)
+      .single();
+
+    if (error) {
+      logger.error('Failed to get analysis result:', error);
+      return null;
+    }
 
     return result;
   }
@@ -170,18 +210,24 @@ export class AnalysisService {
   }) {
     const { userId, limit, offset, ticker } = params;
 
-    const results = await prisma.analysisResult.findMany({
-      where: {
-        userId,
-        ...(ticker && { ticker }),
-      },
-      take: limit,
-      skip: offset,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    let query = supabase
+      .from('AnalysisResult')
+      .select('*')
+      .eq('userId', userId)
+      .order('createdAt', { ascending: false })
+      .range(offset, offset + limit - 1);
 
-    return results;
+    if (ticker) {
+      query = query.eq('ticker', ticker);
+    }
+
+    const { data: results, error } = await query;
+
+    if (error) {
+      logger.error('Failed to get analysis history:', error);
+      return [];
+    }
+
+    return results || [];
   }
 }

@@ -12,7 +12,9 @@ prisma.$connect()
   })
   .catch((error) => {
     logger.error('❌ Database connection failed:', error);
-    process.exit(1);
+    logger.warn('⚠️  Server will continue without Prisma database connection');
+    logger.info('ℹ️  Using Supabase JS client for database operations');
+    // Don't exit - allow server to run with Supabase JS client fallback
   });
 
 export { prisma };

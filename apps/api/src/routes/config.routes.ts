@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
-import { prisma } from '../db/prisma';
+import { supabase } from '../db/supabase';
 import { z } from 'zod';
 
 const router = Router();
@@ -22,17 +22,21 @@ router.get('/', authenticate, async (req, res, next) => {
   try {
     const userId = (req as any).user.id;
 
-    let config = await prisma.userConfig.findUnique({
-      where: { userId },
-    });
+    let { data: config } = await supabase
+      .from('UserConfig')
+      .select('*')
+      .eq('userId', userId)
+      .single();
 
     if (!config) {
       // Create default config
-      config = await prisma.userConfig.create({
-        data: {
-          userId,
-        },
-      });
+      const { data: newConfig, error } = await supabase
+        .from('UserConfig')
+        .insert({ userId })
+        .select()
+        .single();
+      
+      config = newConfig || undefined;
     }
 
     res.json({
@@ -50,14 +54,23 @@ router.put('/', authenticate, async (req, res, next) => {
     const userId = (req as any).user.id;
     const validated = configSchema.parse(req.body);
 
-    const config = await prisma.userConfig.upsert({
-      where: { userId },
-      update: validated,
-      create: {
+    const { data: config, error } = await supabase
+      .from('UserConfig')
+      .upsert({
         userId,
         ...validated,
-      },
-    });
+      }, {
+        onConflict: 'userId'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to update configuration',
+      });
+    }
 
     res.json({
       success: true,

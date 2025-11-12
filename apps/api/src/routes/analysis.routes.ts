@@ -47,8 +47,8 @@ export default (io: SocketIOServer) => {
     }
   });
 
-  // Get analysis status
-  router.get('/:id/status', authenticate, async (req, res, next) => {
+  // Get analysis status (auth disabled for demo)
+  router.get('/:id/status', async (req, res, next) => {
     try {
       const { id } = req.params;
       const status = await analysisService.getStatus(id);
@@ -69,8 +69,8 @@ export default (io: SocketIOServer) => {
     }
   });
 
-  // Stop analysis
-  router.post('/:id/stop', authenticate, async (req, res, next) => {
+  // Stop analysis (auth disabled for demo)
+  router.post('/:id/stop', async (req, res, next) => {
     try {
       const { id } = req.params;
       await analysisService.stopAnalysis(id);
@@ -84,11 +84,11 @@ export default (io: SocketIOServer) => {
     }
   });
 
-  // Get analysis result
-  router.get('/:id/result', authenticate, async (req, res, next) => {
+  // Get analysis result (auth disabled for demo)
+  router.get('/:id/result', async (req, res, next) => {
     try {
       const { id } = req.params;
-      const userId = (req as any).user.id;
+      const userId = 'demo-user'; // Use demo user for demo mode
 
       const result = await analysisService.getResult(id, userId);
 
@@ -108,10 +108,10 @@ export default (io: SocketIOServer) => {
     }
   });
 
-  // Get history
-  router.get('/history', authenticate, async (req, res, next) => {
+  // Get history (auth disabled for demo)
+  router.get('/history', async (req, res, next) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = 'demo-user'; // Use demo user for demo mode
       const { limit = '50', offset = '0', ticker } = req.query;
 
       const results = await analysisService.getHistory({

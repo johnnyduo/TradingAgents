@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { prisma } from '../db/prisma';
+import { supabase } from '../db/supabase';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import { nanoid } from 'nanoid';
 
 const router = Router();
 
@@ -23,9 +24,11 @@ router.post('/register', async (req, res, next) => {
     const validated = registerSchema.parse(req.body);
 
     // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: validated.email },
-    });
+    const { data: existingUser } = await supabase
+      .from('User')
+      .select('id')
+      .eq('email', validated.email)
+      .single();
 
     if (existingUser) {
       return res.status(400).json({
@@ -38,13 +41,24 @@ router.post('/register', async (req, res, next) => {
     const passwordHash = await bcrypt.hash(validated.password, 10);
 
     // Create user
-    const user = await prisma.user.create({
-      data: {
+    const userId = nanoid();
+    const { data: user, error: createError } = await supabase
+      .from('User')
+      .insert({
+        id: userId,
         email: validated.email,
         passwordHash,
         name: validated.name,
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (createError || !user) {
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to create user',
+      });
+    }
 
     // Generate token
     const token = jwt.sign(
@@ -82,11 +96,13 @@ router.post('/login', async (req, res, next) => {
     const validated = loginSchema.parse(req.body);
 
     // Find user
-    const user = await prisma.user.findUnique({
-      where: { email: validated.email },
-    });
+    const { data: user, error } = await supabase
+      .from('User')
+      .select('*')
+      .eq('email', validated.email)
+      .single();
 
-    if (!user || !user.passwordHash) {
+    if (error || !user || !user.passwordHash) {
       return res.status(401).json({
         success: false,
         error: 'Invalid credentials',

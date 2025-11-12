@@ -9,8 +9,9 @@ import { setupWebSocket } from './websocket';
 import { errorHandler } from './middleware/error';
 import { requestLogger } from './middleware/logger';
 import { rateLimiter } from './middleware/rate-limit';
-import { prisma } from './db/prisma';
 import { logger } from './utils/logger';
+// Import supabase to ensure it initializes
+import './db/supabase';
 
 // Load environment variables
 dotenv.config();
@@ -65,8 +66,6 @@ const gracefulShutdown = async () => {
     logger.info('HTTP server closed');
   });
   
-  // Close database connection
-  await prisma.$disconnect();
   logger.info('Database connection closed');
   
   process.exit(0);
