@@ -182,9 +182,9 @@ export default function Home() {
       result.state.marketAnalysis?.report,
       result.state.newsAnalysis?.report,
       result.state.fundamentalAnalysis?.report,
-      result.state.bullCase?.report,
-      result.state.bearCase?.report,
-      result.state.traderDecision?.report
+      result.state.bullCase?.thesis,
+      result.state.bearCase?.thesis,
+      result.state.traderDecision?.reasoning
     ];
     
     return reports[index] || 'No report available';
@@ -307,9 +307,13 @@ export default function Home() {
               <motion.button
                 type="submit"
                 disabled={loading || !ticker.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-8 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-200"
-                whileHover={{ scale: 1.02 }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-8 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all duration-200"
+                whileHover={{ 
+                  boxShadow: '0 20px 40px -12px rgba(168, 85, 247, 0.5)',
+                  backgroundImage: 'linear-gradient(to right, rgb(147, 51, 234), rgb(59, 130, 246))'
+                }}
                 whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
               >
                 {loading ? 'Analyzing...' : 'Analyze'}
               </motion.button>
