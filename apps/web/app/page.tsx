@@ -379,31 +379,33 @@ export default function Home() {
               </motion.button>
             </div>
 
-            {/* Asset Type Badge - Small tag under search bar */}
-            <AnimatePresence>
-              {assetInfo && (
-                <motion.div
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  className="mt-2 flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-full text-xs font-medium"
-                  style={{
-                    backgroundImage: `linear-gradient(to right, ${
-                      assetInfo.type === 'stock' ? 'rgba(147, 51, 234, 0.2), rgba(59, 130, 246, 0.2)' :
-                      assetInfo.type === 'crypto' ? 'rgba(249, 115, 22, 0.2), rgba(251, 191, 36, 0.2)' :
-                      'rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2)'
-                    })`,
-                    color: assetInfo.type === 'stock' ? 'rgb(167, 139, 250)' :
-                           assetInfo.type === 'crypto' ? 'rgb(251, 191, 36)' :
-                           'rgb(52, 211, 153)'
-                  }}
-                >
-                  <span>{assetInfo.icon}</span>
-                  <span className="uppercase font-semibold">{assetInfo.type}</span>
-                  <span className="opacity-60">• {assetInfo.displayName}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Asset Type Badge - Fixed height container to prevent layout shift */}
+            <div className="h-8 mt-2">
+              <AnimatePresence>
+                {assetInfo && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-full text-xs font-medium"
+                    style={{
+                      backgroundImage: `linear-gradient(to right, ${
+                        assetInfo.type === 'stock' ? 'rgba(147, 51, 234, 0.2), rgba(59, 130, 246, 0.2)' :
+                        assetInfo.type === 'crypto' ? 'rgba(249, 115, 22, 0.2), rgba(251, 191, 36, 0.2)' :
+                        'rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2)'
+                      })`,
+                      color: assetInfo.type === 'stock' ? 'rgb(167, 139, 250)' :
+                             assetInfo.type === 'crypto' ? 'rgb(251, 191, 36)' :
+                             'rgb(52, 211, 153)'
+                    }}
+                  >
+                    <span>{assetInfo.icon}</span>
+                    <span className="uppercase font-semibold">{assetInfo.type}</span>
+                    <span className="opacity-60">• {assetInfo.displayName}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             <AnimatePresence>
               {error && (
