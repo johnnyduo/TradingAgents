@@ -366,7 +366,7 @@ export default function Home() {
               <motion.button
                 type="submit"
                 disabled={loading || !ticker.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-8 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-8 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-w-[140px]"
                 whileHover={{ 
                   boxShadow: '0 20px 40px -12px rgba(168, 85, 247, 0.6)'
                 }}
