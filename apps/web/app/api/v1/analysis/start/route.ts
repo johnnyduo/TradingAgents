@@ -133,8 +133,11 @@ async function executeAnalysisAsync(
     // Extract decision
     const decision = finalState.finalDecision?.decision || 'hold';
 
+    // Lazy load Supabase for update
+    const { supabase: supabaseClient } = await import('@/src/db/supabase');
+
     // Update database
-    await supabase
+    await supabaseClient
       .from('AnalysisResult')
       .update({
         state: finalState as any,
@@ -147,16 +150,22 @@ async function executeAnalysisAsync(
     console.log(`✅ Analysis ${analysisId} completed: ${decision}`);
   } catch (error: any) {
     console.error(`❌ Analysis ${analysisId} failed:`, error);
+    console.error(`Error details:`, {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
 
     // Lazy load Supabase for error handling
     const { supabase } = await import('@/src/db/supabase');
     
-    // Update status to failed
+    // Update status to failed with error message
     await supabase
       .from('AnalysisResult')
       .update({
         status: 'failed',
         completedAt: new Date().toISOString(),
+        error: error.message || 'Unknown error',
       })
       .eq('id', analysisId);
   }
