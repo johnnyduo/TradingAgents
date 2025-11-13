@@ -3,11 +3,12 @@ import { supabase } from '@/src/db/supabase';
 import { TradingGraph } from '@/src/graph/trading.graph';
 import { nanoid } from 'nanoid';
 
-// Force dynamic rendering
+// Force dynamic rendering and edge runtime
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 300;
 
-export async function OPTIONS() {
+export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {
