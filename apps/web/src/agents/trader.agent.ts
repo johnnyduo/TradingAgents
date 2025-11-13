@@ -2,6 +2,7 @@ import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { BaseAgent, AgentConfig } from './base.agent';
 import { AgentState } from '@tradingagents/types';
 import { logger } from '../utils/logger';
+import { getCurrentDateTimeWithTimezone } from '../utils/date.utils';
 
 export class TraderAgent extends BaseAgent {
   constructor(config?: Partial<AgentConfig>) {
@@ -23,7 +24,9 @@ export class TraderAgent extends BaseAgent {
         'system',
         `You are a Professional Trader and Portfolio Manager making final investment decisions. You synthesize technical, fundamental, and sentiment analysis to make high-probability trades with optimal risk/reward ratios.
 
-⚠️ DECISION CONTEXT: All analyst reports contain LIVE, REAL-TIME data from financial APIs as of {date}. This includes current prices, live news sentiment, real-time fundamentals, and actual market conditions. You are making decisions on current market data, not historical information.
+⚠️ CURRENT DATE & TIME: {currentDateTime}
+
+⚠️ DECISION CONTEXT: All analyst reports contain LIVE, REAL-TIME data from financial APIs retrieved on {currentDateTime}. This includes current prices, live news sentiment, real-time fundamentals, and actual market conditions. You are making decisions on current market data, not historical information.
 
 DECISION-MAKING FRAMEWORK:
 
@@ -173,6 +176,7 @@ Use exact prices, specific percentages, and concrete numbers throughout. Referen
 
       const prompt = await this.promptTemplate.format({
         ticker: state.ticker,
+        currentDateTime: getCurrentDateTimeWithTimezone(),
         marketAnalysis: state.marketAnalysis?.report || 'Not available',
         newsAnalysis: state.newsAnalysis?.report || 'Not available',
         fundamentalAnalysis: state.fundamentalAnalysis?.report || 'Not available',

@@ -5,6 +5,7 @@ import { getCryptoNewsTool } from '../tools/crypto.tools';
 import { getForexNewsTool } from '../tools/forex.tools';
 import { AgentState } from '@tradingagents/types';
 import { logger } from '../utils/logger';
+import { getCurrentDateTimeWithTimezone } from '../utils/date.utils';
 
 export class NewsAnalystAgent extends BaseAgent {
   constructor(config?: Partial<AgentConfig>) {
@@ -24,9 +25,11 @@ export class NewsAnalystAgent extends BaseAgent {
     return ChatPromptTemplate.fromMessages([
       [
         'system',
-        `You are an Elite News & Sentiment Analyst specializing in market-moving events, news interpretation, and sentiment analysis. You analyze LIVE news feeds and social data to assess market psychology.
+        `You are an Elite News & Sentiment Analyst specializing in financial markets, event analysis, and sentiment quantification. You analyze news flow and market psychology to assess investment implications.
 
-⚠️ DATA SOURCE: You receive REAL-TIME news articles, social sentiment, and event data from financial APIs as of {date}. This is current market information, not historical data.
+⚠️ CURRENT DATE & TIME: {currentDateTime}
+
+⚠️ DATA SOURCE: You receive REAL-TIME news articles, social sentiment, and event data from financial APIs retrieved on {currentDateTime}. This is current market information, not historical data.
 
 ANALYSIS FRAMEWORK:
 
@@ -166,6 +169,7 @@ Include specific dates, sources, and sentiment scores. Reference actual headline
         ticker: state.ticker,
         assetType: assetType,
         date: state.date,
+        currentDateTime: getCurrentDateTimeWithTimezone(),
         marketAnalysis: marketContext,
       });
 

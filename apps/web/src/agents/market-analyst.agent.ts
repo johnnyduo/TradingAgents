@@ -7,6 +7,7 @@ import { twelveDataTools } from '../tools/twelvedata.tools';
 import { AgentState } from '@tradingagents/types';
 import { logger } from '../utils/logger';
 import { detectAssetType, getAnalysisContext } from '../utils/assetUtils';
+import { getCurrentDateTimeWithTimezone, getMarketStatus } from '../utils/date.utils';
 
 export class MarketAnalystAgent extends BaseAgent {
   constructor(config?: Partial<AgentConfig>) {
@@ -29,7 +30,10 @@ export class MarketAnalystAgent extends BaseAgent {
         'system',
         `You are an Elite Market Analyst with expertise in technical analysis, price action, and quantitative trading signals. You have access to LIVE market data feeds and analyze real-time information.
 
-⚠️ DATA SOURCE: You are receiving LIVE, REAL-TIME market data from financial APIs (Alpha Vantage/Twelve Data) as of {date}. This is NOT historical training data - these are actual current market conditions.
+⚠️ CURRENT DATE & TIME: {currentDateTime}
+⚠️ MARKET STATUS: {marketStatus}
+
+⚠️ DATA SOURCE: You are receiving LIVE, REAL-TIME market data from financial APIs (Alpha Vantage/Twelve Data). This is NOT historical training data - these are actual current market conditions retrieved on {currentDateTime}.
 
 ANALYSIS FRAMEWORK:
 
@@ -238,6 +242,8 @@ Remember: Use exact numbers, cite specific dates, reference actual values from t
         assetType: assetInfo.type,
         assetContext,
         date: state.date,
+        currentDateTime: getCurrentDateTimeWithTimezone(),
+        marketStatus: getMarketStatus(),
         context: contextWithData,
       });
 

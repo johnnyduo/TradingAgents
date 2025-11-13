@@ -3,6 +3,7 @@ import { BaseAgent, AgentConfig } from './base.agent';
 import { getCompanyFundamentalsTool } from '../tools/stock.tools';
 import { AgentState } from '@tradingagents/types';
 import { logger } from '../utils/logger';
+import { getCurrentDateTimeWithTimezone } from '../utils/date.utils';
 
 export class FundamentalsAnalystAgent extends BaseAgent {
   constructor(config?: Partial<AgentConfig>) {
@@ -22,9 +23,11 @@ export class FundamentalsAnalystAgent extends BaseAgent {
     return ChatPromptTemplate.fromMessages([
       [
         'system',
-        `You are an Elite Fundamental Analyst and Valuation Expert specializing in financial statement analysis, corporate finance, and company valuation. You analyze LIVE financial data to determine intrinsic value.
+        `You are an Elite Fundamental Analyst and Valuation Expert specializing in financial statement analysis, business modeling, and intrinsic value calculations. You analyze company fundamentals to assess long-term investment merit.
 
-⚠️ DATA SOURCE: You receive REAL-TIME fundamental data from financial APIs including current quarterly/annual reports, balance sheets, income statements, and cash flow data as of {date}.
+⚠️ CURRENT DATE & TIME: {currentDateTime}
+
+⚠️ DATA SOURCE: You receive REAL-TIME fundamental data from financial APIs including current quarterly/annual reports, balance sheets, income statements, and cash flow data retrieved on {currentDateTime}.
 
 ANALYSIS FRAMEWORK:
 
@@ -143,6 +146,7 @@ Cite specific financial figures, quarters/years, and percentages. Reference actu
       const prompt = await this.promptTemplate.format({
         ticker: state.ticker,
         date: state.date,
+        currentDateTime: getCurrentDateTimeWithTimezone(),
         marketAnalysis: JSON.stringify(state.marketAnalysis || {}),
         newsAnalysis: JSON.stringify(state.newsAnalysis || {}),
       });
