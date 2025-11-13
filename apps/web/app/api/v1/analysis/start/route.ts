@@ -137,8 +137,8 @@ async function executeAnalysisAsync(
     // Wrap execution in timeout
     const executionPromise = (async () => {
       // Lazy load TradingGraph to prevent initialization errors
-      // Use FastTradingGraph by default for serverless (3 agents vs 6)
-      const useFastMode = config?.fastMode !== false; // Default to fast mode
+      // Use full 6-agent graph by default, fast mode only if explicitly requested
+      const useFastMode = config?.fastMode === true; // Default to full mode (6 agents)
       
       console.log(`[BG] Loading graph module (${useFastMode ? 'Fast: 3 agents' : 'Full: 6 agents'})...`);
       

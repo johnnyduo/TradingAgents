@@ -55,36 +55,72 @@ export class TradingGraph {
   private setupNodes(): void {
     // Analyst Nodes
     this.graph.addNode('market_analyst', async (state: AgentState) => {
+      const startTime = Date.now();
+      console.log('[TradingGraph] 📊 Starting Market Analyst...');
       logger.info('📊 Executing Market Analyst Node');
-      return await this.marketAnalyst.execute(state);
+      
+      const result = await this.marketAnalyst.execute(state);
+      
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      console.log(`[TradingGraph] ✅ Market Analyst completed in ${duration}s`);
+      return result;
     });
 
     this.graph.addNode('news_analyst', async (state: AgentState) => {
-      logger.info('� Executing News Analyst Node');
-      return await this.newsAnalyst.execute(state);
+      const startTime = Date.now();
+      console.log('[TradingGraph] 📰 Starting News Analyst...');
+      logger.info('📰 Executing News Analyst Node');
+      
+      const result = await this.newsAnalyst.execute(state);
+      
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      console.log(`[TradingGraph] ✅ News Analyst completed in ${duration}s`);
+      return result;
     });
 
     this.graph.addNode('fundamentals_analyst', async (state: AgentState) => {
+      const startTime = Date.now();
+      console.log('[TradingGraph] 💼 Starting Fundamentals Analyst...');
       logger.info('💼 Executing Fundamentals Analyst Node');
-      return await this.fundamentalsAnalyst.execute(state);
+      
+      const result = await this.fundamentalsAnalyst.execute(state);
+      
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      console.log(`[TradingGraph] ✅ Fundamentals Analyst completed in ${duration}s`);
+      return result;
     });
 
     // Researcher Nodes
     this.graph.addNode('bull_researcher', async (state: AgentState) => {
+      const startTime = Date.now();
+      console.log('[TradingGraph] 🐂 Starting Bull Researcher...');
       logger.info('🐂 Executing Bull Researcher Node');
-      return await this.bullResearcher.execute(state);
+      
+      const result = await this.bullResearcher.execute(state);
+      
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      console.log(`[TradingGraph] ✅ Bull Researcher completed in ${duration}s`);
+      return result;
     });
 
     this.graph.addNode('bear_researcher', async (state: AgentState) => {
+      const startTime = Date.now();
+      console.log('[TradingGraph] 🐻 Starting Bear Researcher...');
       logger.info('🐻 Executing Bear Researcher Node');
-      return await this.bearResearcher.execute(state);
+      
+      const result = await this.bearResearcher.execute(state);
+      
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      console.log(`[TradingGraph] ✅ Bear Researcher completed in ${duration}s`);
+      return result;
     });
 
     // Debate Node (simplified for now)
     this.graph.addNode('invest_debate', async (state: AgentState) => {
+      console.log('[TradingGraph] ⚖️ Processing Investment Debate...');
       logger.info('⚖️ Investment Debate Node');
-      // Simple voting mechanism - more sophisticated debate to be implemented
-      return {
+      
+      const result = {
         ...state,
         investDebate: {
           decision: 'proceed',
@@ -92,12 +128,22 @@ export class TradingGraph {
           timestamp: new Date().toISOString(),
         },
       };
+      
+      console.log('[TradingGraph] ✅ Investment Debate completed');
+      return result;
     });
 
     // Trader Node
     this.graph.addNode('trader', async (state: AgentState) => {
+      const startTime = Date.now();
+      console.log('[TradingGraph] 💰 Starting Trader...');
       logger.info('💰 Executing Trader Node');
-      return await this.trader.execute(state);
+      
+      const result = await this.trader.execute(state);
+      
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      console.log(`[TradingGraph] ✅ Trader completed in ${duration}s`);
+      return result;
     });
 
     // Final Decision Node (simplified)
