@@ -228,6 +228,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.81.1
         version: 2.81.1
+      '@vercel/functions':
+        specifier: ^3.3.1
+        version: 3.3.1
       '@vercel/node':
         specifier: ^3.0.0
         version: 3.2.29
@@ -4186,6 +4189,18 @@ packages:
   /@vercel/error-utils@2.0.3:
     resolution: {integrity: sha512-CqC01WZxbLUxoiVdh9B/poPbNpY9U+tO1N9oWHwTl5YAZxcqXmmWJ8KNMFItJCUUWdY3J3xv8LvAuQv2KZ5YdQ==}
 
+  /@vercel/functions@3.3.1:
+    resolution: {integrity: sha512-iSurbVegVub6x8sAPhrupRzhVDh8xTRpHZ9UMFHjgR44oX6MNjVBicEjIZfe1PMDPd2lWMcgGS9atsySbBfDRA==}
+    engines: {node: '>= 20'}
+    peerDependencies:
+      '@aws-sdk/credential-provider-web-identity': '*'
+    peerDependenciesMeta:
+      '@aws-sdk/credential-provider-web-identity':
+        optional: true
+    dependencies:
+      '@vercel/oidc': 3.0.4
+    dev: false
+
   /@vercel/nft@0.27.3:
     resolution: {integrity: sha512-oySTdDSzUAFDXpsSLk9Q943o+/Yu/+TCFxnehpFQEf/3khi2stMpTHPVNwFdvZq/Z4Ky93lE+MGHpXCRpMkSCA==}
     engines: {node: '>=16'}
@@ -4235,6 +4250,11 @@ packages:
       - '@swc/wasm'
       - encoding
       - supports-color
+
+  /@vercel/oidc@3.0.4:
+    resolution: {integrity: sha512-NUna+D5Kk0UMscKnnFVgHhV4SfuoiE9wFpF8E8RvxHYQv9NB2PRIkQp0eTvu2uVzExFB5eH2/lYPpxw/SrICzg==}
+    engines: {node: '>= 20'}
+    dev: false
 
   /@vercel/static-config@3.0.0:
     resolution: {integrity: sha512-2qtvcBJ1bGY0dYGYh3iM7yGKkk971FujLEDXzuW5wcZsPr1GSEjO/w2iSr3qve6nDDtBImsGoDEnus5FI4+fIw==}

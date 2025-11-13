@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { waitUntil } from '@vercel/functions';
 // Lazy imports to prevent module initialization errors
 // import { supabase } from '@/src/db/supabase';
 // import { TradingGraph } from '@/src/graph/trading.graph';
@@ -85,8 +86,18 @@ export async function POST(req: NextRequest) {
       throw new Error('Failed to create analysis result');
     }
 
-    // Execute analysis asynchronously (non-blocking)
-    executeAnalysisAsync(analysisId, ticker.toUpperCase(), analysisDate, config);
+    console.log(`[API] Registering background task with waitUntil for ${analysisId}`);
+    
+    // Use Vercel's waitUntil to ensure background task completes
+    // This prevents the function from terminating before analysis finishes
+    waitUntil(
+      executeAnalysisAsync(analysisId, ticker.toUpperCase(), analysisDate, config)
+        .catch((error) => {
+          console.error(`[API] Background execution error for ${analysisId}:`, error);
+        })
+    );
+
+    console.log(`[API] Returning response with analysis ID ${analysisId}`);
 
     // Return immediately with analysis ID
     return NextResponse.json({
