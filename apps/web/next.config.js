@@ -8,13 +8,13 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Skip error page generation
+  // Use standalone output for Vercel deployment
+  output: 'standalone',
   generateBuildId: async () => {
     return 'build-' + Date.now();
   },
   productionBrowserSourceMaps: false,
   experimental: {
-    // Skip generating error pages
     serverActions: {
       bodySizeLimit: '2mb',
     },
