@@ -16,11 +16,17 @@ export default function MetricsSummary({ analysisState, ticker, decision }: Metr
     const marketText = analysisState.marketAnalysis.report || '';
     const traderText = analysisState.traderDecision?.report || '';
     
-    // Extract key metrics
-    const priceMatch = marketText.match(/\$?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)(?:\s*(?:USD|price|close))?/i);
-    const changeMatch = marketText.match(/([-+]?\d+\.?\d*)%/);
+    // Extract key metrics - use more specific patterns
+    // Look for "current price", "trading at", "price:", etc. followed by a dollar amount
+    const priceMatch = marketText.match(/(?:current\s+price|trading\s+at|price\s+is|price:)\s*\$?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/i) ||
+                       marketText.match(/\$(\d{1,3}(?:,\d{3})*\.\d{2})\s*(?:per\s+share|current|today)/i);
+    
+    // Look for percentage change with +/- sign
+    const changeMatch = marketText.match(/(?:change|move|up|down|gain|loss)[^\d]*([-+]\d+\.?\d*)%/i) ||
+                        marketText.match(/([-+]\d+\.?\d*)%\s*(?:change|move|today|daily)/i);
+    
     const rsiMatch = marketText.match(/RSI[:\s]+(\d{1,3}\.?\d*)/i);
-    const volumeMatch = marketText.match(/volume[:\s]+(\d{1,3}(?:,\d{3})*)/i);
+    const volumeMatch = marketText.match(/volume[:\s]+(\d{1,3}(?:,\d{3})*(?:,\d{3})?)/i);
     
     // Extract conviction score
     const convictionMatch = traderText.match(/conviction[:\s]+(\d{1,2})(?:\/10)?/i);

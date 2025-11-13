@@ -39,12 +39,14 @@ const extractMetrics = (text: string) => {
     sentiment: null,
   };
 
-  // Extract price
-  const priceMatch = text.match(/\$?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)(?:\s*(?:USD|price|close))?/i);
+  // Extract price - look for specific contexts
+  const priceMatch = text.match(/(?:current\s+price|trading\s+at|price\s+is|price:)\s*\$?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/i) ||
+                     text.match(/\$(\d{1,3}(?:,\d{3})*\.\d{2})\s*(?:per\s+share|current|today)/i);
   if (priceMatch) metrics.price = parseFloat(priceMatch[1].replace(/,/g, ''));
 
-  // Extract percentage change
-  const changeMatch = text.match(/([-+]?\d+\.?\d*)%/);
+  // Extract percentage change - look for +/- sign
+  const changeMatch = text.match(/(?:change|move|up|down|gain|loss)[^\d]*([-+]\d+\.?\d*)%/i) ||
+                      text.match(/([-+]\d+\.?\d*)%\s*(?:change|move|today|daily)/i);
   if (changeMatch) metrics.change = parseFloat(changeMatch[1]);
 
   // Extract RSI
@@ -52,7 +54,7 @@ const extractMetrics = (text: string) => {
   if (rsiMatch) metrics.rsi = parseFloat(rsiMatch[1]);
 
   // Extract volume
-  const volumeMatch = text.match(/volume[:\s]+(\d{1,3}(?:,\d{3})*)/i);
+  const volumeMatch = text.match(/volume[:\s]+(\d{1,3}(?:,\d{3})*(?:,\d{3})?)/i);
   if (volumeMatch) metrics.volume = parseInt(volumeMatch[1].replace(/,/g, ''));
 
   return metrics;
@@ -208,7 +210,7 @@ export default function AnalysisCharts({ analysisState }: AnalysisChartsProps) {
 
   return (
     <div className="mt-8 space-y-6">
-      <h3 className="text-2xl font-bold text-gray-800 dark:text-white">📊 Data Visualization</h3>
+      <h3 className="text-2xl font-bold text-gray-800 text-white">📊 Data Visualization</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Price Targets Chart */}

@@ -98,7 +98,7 @@ Parse the JSON data above and provide a comprehensive technical analysis. Extrac
 Required Sections:
 
 Market Overview:
-Start with current price and daily change. Describe the immediate market state using exact numbers from the data (price, volume, percentage changes). Compare to previous close and note if we're near highs/lows.
+CRITICAL: Start with "Current Price: $XXX.XX" on the very first line using the exact price from the API data. Then state the daily change as "+/-X.XX%". Describe the immediate market state using exact numbers from the data (price, volume, percentage changes). Compare to previous close and note if we're near highs/lows.
 
 Price Action Analysis:
 Analyze the recent price movement using the time series data. Identify the trend direction, calculate the range, note any patterns. Specify actual dates and prices. Compare current position to recent support/resistance levels visible in the data.
