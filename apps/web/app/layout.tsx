@@ -10,14 +10,15 @@ export default function RootLayout({
 }) {
   useEffect(() => {
     document.title = 'TradingAgents - AI-Powered Trading Analysis';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) {
+      meta.setAttribute('content', 'Multi-agent AI system for comprehensive stock trading analysis');
+    }
   }, []);
 
   return (
-    <html lang="en">
-      <head>
-        <meta name="description" content="Multi-agent AI system for comprehensive stock trading analysis" />
-      </head>
-      <body className="font-sans antialiased">{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="font-sans antialiased" suppressHydrationWarning>{children}</body>
     </html>
   );
 }
