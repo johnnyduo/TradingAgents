@@ -71,97 +71,122 @@ export default function MetricsSummary({ analysisState, ticker, decision }: Metr
       animate={{ opacity: 1, y: 0 }}
       className="mb-8"
     >
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-white/10">
-        {/* Header */}
-        <div className={`bg-gradient-to-r ${getDecisionColor()} p-6`}>
-          <div className="flex items-center justify-between">
+      <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/10">
+        {/* Header with gradient matching the theme */}
+        <div className={`bg-gradient-to-r ${getDecisionColor()} p-8 relative overflow-hidden`}>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+          <div className="relative flex items-center justify-between">
             <div>
-              <div className="text-white/80 text-sm font-medium mb-1">Analysis Complete for</div>
-              <div className="text-3xl font-bold text-white">{ticker.toUpperCase()}</div>
+              <div className="text-white/90 text-sm font-medium mb-2 uppercase tracking-wider">Analysis Complete</div>
+              <div className="text-5xl font-bold text-white mb-1">{ticker.toUpperCase()}</div>
+              <div className="text-white/80 text-base">
+                {decision}
+              </div>
             </div>
-            <div className="text-6xl">{getDecisionEmoji()}</div>
+            <motion.div 
+              className="text-7xl"
+              animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              {getDecisionEmoji()}
+            </motion.div>
           </div>
         </div>
 
-        {/* Metrics Grid */}
-        <div className="p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          {/* Current Price */}
-          {metrics.price && (
-            <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-4 rounded-xl border border-blue-500/30">
-              <div className="text-blue-300 text-xs font-medium mb-1">Current Price</div>
-              <div className="text-white text-2xl font-bold">${metrics.price.toFixed(2)}</div>
-            </div>
-          )}
+        {/* Metrics Grid - Glassmorphism cards matching theme */}
+        <div className="p-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            {/* Current Price */}
+            {metrics.price && (
+              <motion.div 
+                className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 backdrop-blur-sm p-5 rounded-xl border border-blue-400/20 hover:border-blue-400/40 transition-all hover:scale-105"
+                whileHover={{ y: -2 }}
+              >
+                <div className="text-blue-300 text-xs font-semibold mb-2 uppercase tracking-wider">Price</div>
+                <div className="text-white text-3xl font-bold mb-1">${metrics.price.toFixed(2)}</div>
+              </motion.div>
+            )}
 
-          {/* Price Change */}
-          {metrics.change !== null && (
-            <div className={`bg-gradient-to-br ${metrics.change >= 0 ? 'from-green-500/20 to-green-600/20' : 'from-red-500/20 to-red-600/20'} p-4 rounded-xl border ${metrics.change >= 0 ? 'border-green-500/30' : 'border-red-500/30'}`}>
-              <div className={`${metrics.change >= 0 ? 'text-green-300' : 'text-red-300'} text-xs font-medium mb-1`}>
-                Daily Change
-              </div>
-              <div className="text-white text-2xl font-bold">
-                {metrics.change >= 0 ? '+' : ''}{metrics.change.toFixed(2)}%
-              </div>
-            </div>
-          )}
+            {/* Price Change */}
+            {metrics.change !== null && (
+              <motion.div 
+                className={`bg-gradient-to-br ${metrics.change >= 0 ? 'from-emerald-500/10 to-emerald-600/10' : 'from-rose-500/10 to-rose-600/10'} backdrop-blur-sm p-5 rounded-xl border ${metrics.change >= 0 ? 'border-emerald-400/20 hover:border-emerald-400/40' : 'border-rose-400/20 hover:border-rose-400/40'} transition-all hover:scale-105`}
+                whileHover={{ y: -2 }}
+              >
+                <div className={`${metrics.change >= 0 ? 'text-emerald-300' : 'text-rose-300'} text-xs font-semibold mb-2 uppercase tracking-wider`}>
+                  Change
+                </div>
+                <div className="text-white text-3xl font-bold mb-1">
+                  {metrics.change >= 0 ? '+' : ''}{metrics.change.toFixed(2)}%
+                </div>
+              </motion.div>
+            )}
 
-          {/* RSI */}
-          {metrics.rsi && (
-            <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 p-4 rounded-xl border border-purple-500/30">
-              <div className="text-purple-300 text-xs font-medium mb-1">RSI</div>
-              <div className="text-white text-2xl font-bold">{metrics.rsi.toFixed(1)}</div>
-              <div className="text-purple-300 text-xs mt-1">
-                {metrics.rsi > 70 ? 'Overbought' : metrics.rsi < 30 ? 'Oversold' : 'Neutral'}
-              </div>
-            </div>
-          )}
+            {/* RSI */}
+            {metrics.rsi && (
+              <motion.div 
+                className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 backdrop-blur-sm p-5 rounded-xl border border-purple-400/20 hover:border-purple-400/40 transition-all hover:scale-105"
+                whileHover={{ y: -2 }}
+              >
+                <div className="text-purple-300 text-xs font-semibold mb-2 uppercase tracking-wider">RSI</div>
+                <div className="text-white text-3xl font-bold mb-1">{metrics.rsi.toFixed(1)}</div>
+                <div className="text-purple-300/80 text-xs font-medium">
+                  {metrics.rsi > 70 ? 'Overbought' : metrics.rsi < 30 ? 'Oversold' : 'Neutral'}
+                </div>
+              </motion.div>
+            )}
 
-          {/* Volume */}
-          {metrics.volume && (
-            <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 p-4 rounded-xl border border-orange-500/30">
-              <div className="text-orange-300 text-xs font-medium mb-1">Volume</div>
-              <div className="text-white text-2xl font-bold">
-                {metrics.volume >= 1000000
-                  ? `${(metrics.volume / 1000000).toFixed(1)}M`
-                  : `${(metrics.volume / 1000).toFixed(0)}K`}
-              </div>
-            </div>
-          )}
+            {/* Volume */}
+            {metrics.volume && (
+              <motion.div 
+                className="bg-gradient-to-br from-amber-500/10 to-amber-600/10 backdrop-blur-sm p-5 rounded-xl border border-amber-400/20 hover:border-amber-400/40 transition-all hover:scale-105"
+                whileHover={{ y: -2 }}
+              >
+                <div className="text-amber-300 text-xs font-semibold mb-2 uppercase tracking-wider">Volume</div>
+                <div className="text-white text-3xl font-bold">
+                  {metrics.volume >= 1000000
+                    ? `${(metrics.volume / 1000000).toFixed(1)}M`
+                    : `${(metrics.volume / 1000).toFixed(0)}K`}
+                </div>
+              </motion.div>
+            )}
 
-          {/* Conviction */}
-          {metrics.conviction && (
-            <div className="bg-gradient-to-br from-indigo-500/20 to-indigo-600/20 p-4 rounded-xl border border-indigo-500/30">
-              <div className="text-indigo-300 text-xs font-medium mb-1">Conviction</div>
-              <div className="text-white text-2xl font-bold">{metrics.conviction}/10</div>
-              <div className="text-indigo-300 text-xs mt-1">
-                {metrics.conviction >= 8 ? 'High' : metrics.conviction >= 6 ? 'Medium' : 'Low'}
-              </div>
-            </div>
-          )}
+            {/* Conviction */}
+            {metrics.conviction && (
+              <motion.div 
+                className="bg-gradient-to-br from-indigo-500/10 to-indigo-600/10 backdrop-blur-sm p-5 rounded-xl border border-indigo-400/20 hover:border-indigo-400/40 transition-all hover:scale-105"
+                whileHover={{ y: -2 }}
+              >
+                <div className="text-indigo-300 text-xs font-semibold mb-2 uppercase tracking-wider">Conviction</div>
+                <div className="text-white text-3xl font-bold mb-1">{metrics.conviction}/10</div>
+                <div className="text-indigo-300/80 text-xs font-medium">
+                  {metrics.conviction >= 8 ? 'High' : metrics.conviction >= 6 ? 'Medium' : 'Low'}
+                </div>
+              </motion.div>
+            )}
 
-          {/* Risk:Reward */}
-          {metrics.riskReward && (
-            <div className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 p-4 rounded-xl border border-cyan-500/30">
-              <div className="text-cyan-300 text-xs font-medium mb-1">Risk:Reward</div>
-              <div className="text-white text-2xl font-bold">{metrics.riskReward}</div>
-            </div>
-          )}
+            {/* Risk:Reward */}
+            {metrics.riskReward && (
+              <motion.div 
+                className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/10 backdrop-blur-sm p-5 rounded-xl border border-cyan-400/20 hover:border-cyan-400/40 transition-all hover:scale-105"
+                whileHover={{ y: -2 }}
+              >
+                <div className="text-cyan-300 text-xs font-semibold mb-2 uppercase tracking-wider">R:R Ratio</div>
+                <div className="text-white text-3xl font-bold">{metrics.riskReward}</div>
+              </motion.div>
+            )}
 
-          {/* Position Size */}
-          {metrics.positionSize && (
-            <div className="bg-gradient-to-br from-pink-500/20 to-pink-600/20 p-4 rounded-xl border border-pink-500/30">
-              <div className="text-pink-300 text-xs font-medium mb-1">Position Size</div>
-              <div className="text-white text-2xl font-bold">{metrics.positionSize}%</div>
-              <div className="text-pink-300 text-xs mt-1">of portfolio</div>
-            </div>
-          )}
-        </div>
-
-        {/* Decision Summary */}
-        <div className="px-6 pb-6">
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-            <div className="text-white/60 text-xs font-medium mb-2">TRADING DECISION</div>
-            <div className="text-white text-lg font-bold">{decision}</div>
+            {/* Position Size */}
+            {metrics.positionSize && (
+              <motion.div 
+                className="bg-gradient-to-br from-fuchsia-500/10 to-fuchsia-600/10 backdrop-blur-sm p-5 rounded-xl border border-fuchsia-400/20 hover:border-fuchsia-400/40 transition-all hover:scale-105"
+                whileHover={{ y: -2 }}
+              >
+                <div className="text-fuchsia-300 text-xs font-semibold mb-2 uppercase tracking-wider">Position</div>
+                <div className="text-white text-3xl font-bold mb-1">{metrics.positionSize}%</div>
+                <div className="text-fuchsia-300/80 text-xs font-medium">of portfolio</div>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>

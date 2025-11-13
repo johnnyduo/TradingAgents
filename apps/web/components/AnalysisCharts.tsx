@@ -210,7 +210,10 @@ export default function AnalysisCharts({ analysisState }: AnalysisChartsProps) {
 
   return (
     <div className="mt-8 space-y-6">
-      <h3 className="text-2xl font-bold text-gray-800 text-white">📊 Data Visualization</h3>
+      <div className="flex items-center gap-3 mb-6">
+        <span className="text-3xl">📊</span>
+        <h3 className="text-2xl font-bold text-white">Data Visualization</h3>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Price Targets Chart */}
@@ -218,21 +221,27 @@ export default function AnalysisCharts({ analysisState }: AnalysisChartsProps) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg"
+            className="bg-white/5 backdrop-blur-xl p-6 rounded-xl border border-white/10 hover:border-white/20 transition-all"
           >
-            <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-              🎯 Price Levels & Targets
+            <h4 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+              <span>🎯</span> Price Levels & Targets
             </h4>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={chartData.priceTargets}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="name" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                <XAxis dataKey="name" stroke="#ffffff60" style={{ fontSize: '12px' }} />
+                <YAxis stroke="#ffffff60" style={{ fontSize: '12px' }} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
+                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #ffffff20', borderRadius: '12px' }}
                   labelStyle={{ color: '#f3f4f6' }}
                 />
-                <Bar dataKey="price" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="price" fill="url(#blueGradient)" radius={[8, 8, 0, 0]} />
+                <defs>
+                  <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="100%" stopColor="#1d4ed8" stopOpacity={0.6}/>
+                  </linearGradient>
+                </defs>
               </BarChart>
             </ResponsiveContainer>
           </motion.div>
@@ -244,10 +253,10 @@ export default function AnalysisCharts({ analysisState }: AnalysisChartsProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg"
+            className="bg-white/5 backdrop-blur-xl p-6 rounded-xl border border-white/10 hover:border-white/20 transition-all"
           >
-            <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-              💭 Market Sentiment
+            <h4 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+              <span>💭</span> Market Sentiment
             </h4>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -279,10 +288,10 @@ export default function AnalysisCharts({ analysisState }: AnalysisChartsProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg"
+            className="bg-white/5 backdrop-blur-xl p-6 rounded-xl border border-white/10 hover:border-white/20 transition-all"
           >
-            <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-              📈 Technical Indicators
+            <h4 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+              <span>📈</span> Technical Indicators
             </h4>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={chartData.indicators} layout="vertical">
@@ -299,16 +308,16 @@ export default function AnalysisCharts({ analysisState }: AnalysisChartsProps) {
           </motion.div>
         )}
 
-        {/* Conviction Scores Radar */}
+        {/* Conviction Radar */}
         {chartData.convictionScores.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg"
+            className="bg-white/5 backdrop-blur-xl p-6 rounded-xl border border-white/10 hover:border-white/20 transition-all"
           >
-            <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-              🎯 Conviction Analysis
+            <h4 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+              <span>🎯</span> Signal Conviction
             </h4>
             <ResponsiveContainer width="100%" height={250}>
               <RadarChart data={chartData.convictionScores}>
@@ -330,10 +339,10 @@ export default function AnalysisCharts({ analysisState }: AnalysisChartsProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg md:col-span-2"
+            className="bg-white/5 backdrop-blur-xl p-6 rounded-xl border border-white/10 hover:border-white/20 transition-all md:col-span-2"
           >
-            <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-              💰 Valuation Metrics
+            <h4 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+              <span>💰</span> Valuation Metrics
             </h4>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={chartData.valuationMetrics}>
@@ -350,50 +359,6 @@ export default function AnalysisCharts({ analysisState }: AnalysisChartsProps) {
           </motion.div>
         )}
       </div>
-
-      {/* Key Metrics Summary Cards */}
-      {chartData.metrics.price && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4"
-        >
-          {chartData.metrics.price && (
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
-              <div className="text-sm opacity-80">Current Price</div>
-              <div className="text-2xl font-bold">${chartData.metrics.price.toFixed(2)}</div>
-            </div>
-          )}
-          {chartData.metrics.change !== null && (
-            <div className={`bg-gradient-to-br ${chartData.metrics.change >= 0 ? 'from-green-500 to-green-600' : 'from-red-500 to-red-600'} p-6 rounded-xl shadow-lg text-white`}>
-              <div className="text-sm opacity-80">Change</div>
-              <div className="text-2xl font-bold">
-                {chartData.metrics.change >= 0 ? '+' : ''}{chartData.metrics.change.toFixed(2)}%
-              </div>
-            </div>
-          )}
-          {chartData.metrics.rsi && (
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg text-white">
-              <div className="text-sm opacity-80">RSI</div>
-              <div className="text-2xl font-bold">{chartData.metrics.rsi.toFixed(1)}</div>
-              <div className="text-xs opacity-80">
-                {chartData.metrics.rsi > 70 ? 'Overbought' : chartData.metrics.rsi < 30 ? 'Oversold' : 'Neutral'}
-              </div>
-            </div>
-          )}
-          {chartData.metrics.volume && (
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
-              <div className="text-sm opacity-80">Volume</div>
-              <div className="text-2xl font-bold">
-                {chartData.metrics.volume >= 1000000
-                  ? `${(chartData.metrics.volume / 1000000).toFixed(1)}M`
-                  : `${(chartData.metrics.volume / 1000).toFixed(0)}K`}
-              </div>
-            </div>
-          )}
-        </motion.div>
-      )}
     </div>
   );
 }
