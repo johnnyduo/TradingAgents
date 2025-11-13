@@ -7,17 +7,8 @@
   "installCommand": "pnpm install",
   "framework": "nextjs",
   "regions": ["iad1"],
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@api-url",
-    "OPENAI_API_KEY": "@openai-api-key",
-    "ALPHA_VANTAGE_API_KEY": "@alpha-vantage-api-key",
-    "SUPABASE_URL": "@supabase-url",
-    "SUPABASE_ANON_KEY": "@supabase-anon-key",
-    "DATABASE_URL": "@database-url",
-    "JWT_SECRET": "@jwt-secret"
-  },
   "functions": {
-    "apps/api/src/**/*.ts": {
+    "apps/api/api/**/*.ts": {
       "runtime": "nodejs20.x",
       "maxDuration": 300
     }
