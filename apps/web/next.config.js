@@ -8,8 +8,13 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   generateBuildId: async () => {
-    // Force new build ID to bypass Vercel cache
     return `build-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+  },
+  // Disable static page generation entirely - all pages are dynamic
+  output: 'standalone',
+  // Skip generating 404/500 pages
+  async rewrites() {
+    return [];
   },
 };
 
