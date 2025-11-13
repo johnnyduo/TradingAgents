@@ -124,18 +124,21 @@ async function executeAnalysisAsync(
     // Lazy load TradingGraph to prevent initialization errors
     // Use FastTradingGraph by default for serverless (3 agents vs 6)
     const useFastMode = config?.fastMode !== false; // Default to fast mode
-    const graphModule = useFastMode ? 'fast-trading.graph' : 'trading.graph';
-    const GraphClass = useFastMode ? 'FastTradingGraph' : 'TradingGraph';
     
-    console.log(`[BG] Loading ${GraphClass} module (${useFastMode ? '3 agents' : '6 agents'})...`);
-    const module = await import(`@/src/graph/${graphModule}`);
-    const TradingGraph = useFastMode ? module.FastTradingGraph : module.TradingGraph;
-    console.log(`[BG] ${GraphClass} module loaded successfully`);
+    console.log(`[BG] Loading graph module (${useFastMode ? 'Fast: 3 agents' : 'Full: 6 agents'})...`);
     
-    // Initialize trading graph at runtime
-    console.log(`[BG] Initializing ${GraphClass} instance...`);
-    const tradingGraph = new TradingGraph();
-    console.log(`[BG] ${GraphClass} initialized successfully`);
+    let tradingGraph;
+    if (useFastMode) {
+      const { FastTradingGraph } = await import('@/src/graph/fast-trading.graph');
+      console.log(`[BG] FastTradingGraph module loaded successfully`);
+      tradingGraph = new FastTradingGraph();
+      console.log(`[BG] FastTradingGraph initialized successfully`);
+    } else {
+      const { TradingGraph } = await import('@/src/graph/trading.graph');
+      console.log(`[BG] TradingGraph module loaded successfully`);
+      tradingGraph = new TradingGraph();
+      console.log(`[BG] TradingGraph initialized successfully`);
+    }
 
     // Execute trading graph
     console.log(`[BG] Executing trading graph for ${ticker}...`);
