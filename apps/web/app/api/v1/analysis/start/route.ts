@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/src/db/supabase';
-import { TradingGraph } from '@/src/graph/trading.graph';
+// Lazy imports to prevent module initialization errors
+// import { supabase } from '@/src/db/supabase';
+// import { TradingGraph } from '@/src/graph/trading.graph';
 import { nanoid } from 'nanoid';
 
 // Route segment config
@@ -41,6 +42,9 @@ export async function POST(req: NextRequest) {
     const analysisDate = date || new Date().toISOString().split('T')[0];
 
     console.log(`[API] Starting analysis for ${ticker}`);
+
+    // Lazy load Supabase to prevent initialization errors
+    const { supabase } = await import('@/src/db/supabase');
 
     // Ensure demo user exists
     const { data: existingUser } = await supabase
@@ -113,6 +117,9 @@ async function executeAnalysisAsync(
   try {
     console.log(`Starting execution for analysis ${analysisId}`);
 
+    // Lazy load TradingGraph to prevent initialization errors
+    const { TradingGraph } = await import('@/src/graph/trading.graph');
+    
     // Initialize trading graph at runtime
     const tradingGraph = new TradingGraph();
 
@@ -141,6 +148,9 @@ async function executeAnalysisAsync(
   } catch (error: any) {
     console.error(`❌ Analysis ${analysisId} failed:`, error);
 
+    // Lazy load Supabase for error handling
+    const { supabase } = await import('@/src/db/supabase');
+    
     // Update status to failed
     await supabase
       .from('AnalysisResult')
