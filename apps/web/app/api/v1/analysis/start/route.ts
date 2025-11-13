@@ -1,30 +1,28 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/src/db/supabase';
 import { TradingGraph } from '@/src/graph/trading.graph';
 import { nanoid } from 'nanoid';
 
 const tradingGraph = new TradingGraph();
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+export async function POST(req: NextRequest) {
   try {
-    const { ticker, date, selectedAnalysts, config } = req.body;
+    const body = await req.json();
+    const { ticker, date, selectedAnalysts, config } = body;
 
     if (!ticker) {
-      return res.status(400).json({ error: 'Ticker is required' });
+      return NextResponse.json({ error: 'Ticker is required' }, { status: 400 });
     }
 
     const userId = 'demo-user';
@@ -75,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     executeAnalysisAsync(analysisId, ticker.toUpperCase(), analysisDate, config);
 
     // Return immediately with analysis ID
-    return res.status(200).json({
+    return NextResponse.json({
       success: true,
       data: {
         id: result.id,
@@ -84,10 +82,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     console.error(`Analysis error: ${error.message}`);
-    return res.status(500).json({
+    return NextResponse.json({
       success: false,
       error: error.message || 'Failed to start analysis',
-    });
+    }, { status: 500 });
   }
 }
 
