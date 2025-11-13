@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+// For client-side requests, use relative URLs (empty string)
+// For server-side requests, use full URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? '' : '');
 
 export interface AnalysisResponse {
   success: boolean;
