@@ -115,20 +115,30 @@ async function executeAnalysisAsync(
   config: any
 ) {
   try {
-    console.log(`Starting execution for analysis ${analysisId}`);
+    console.log(`[BG] Starting execution for analysis ${analysisId}`);
+    console.log(`[BG] Environment check:`, {
+      hasOpenAI: !!process.env.OPENAI_API_KEY,
+      hasAlphaVantage: !!process.env.ALPHA_VANTAGE_API_KEY,
+    });
 
     // Lazy load TradingGraph to prevent initialization errors
+    console.log(`[BG] Loading TradingGraph module...`);
     const { TradingGraph } = await import('@/src/graph/trading.graph');
+    console.log(`[BG] TradingGraph module loaded successfully`);
     
     // Initialize trading graph at runtime
+    console.log(`[BG] Initializing TradingGraph instance...`);
     const tradingGraph = new TradingGraph();
+    console.log(`[BG] TradingGraph initialized successfully`);
 
     // Execute trading graph
+    console.log(`[BG] Executing trading graph for ${ticker}...`);
     const finalState = await tradingGraph.execute({
       ticker,
       date,
       context: config?.context || '',
     });
+    console.log(`[BG] Trading graph execution completed`);
 
     // Extract decision
     const decision = finalState.finalDecision?.decision || 'hold';
