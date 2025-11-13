@@ -9,6 +9,10 @@ import AnalysisHistory from '../components/AnalysisHistory';
 import ReportRenderer from '../components/ReportRenderer';
 import { detectAssetType, formatReport, getAgentEmoji, type AssetInfo } from '../lib/assetUtils';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface AgentStatus {
   name: string;
   icon: string;

@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@tradingagents/types', '@tradingagents/config'],
+  output: 'standalone',
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
@@ -11,6 +12,10 @@ const nextConfig = {
     // Warning: This allows production builds to successfully complete even if
     // your project has type errors.
     ignoreBuildErrors: true,
+  },
+  experimental: {
+    // Disable static page generation to avoid SSR issues
+    isrMemoryCacheSize: 0,
   },
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
