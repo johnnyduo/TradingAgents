@@ -25,17 +25,22 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('[API] POST /api/v1/analysis/start - Request received');
+    
     const body = await req.json();
+    console.log('[API] Request body parsed:', { ticker: body.ticker });
+    
     const { ticker, date, selectedAnalysts, config } = body;
 
     if (!ticker) {
+      console.log('[API] Error: Ticker is required');
       return NextResponse.json({ error: 'Ticker is required' }, { status: 400 });
     }
 
     const userId = 'demo-user';
     const analysisDate = date || new Date().toISOString().split('T')[0];
 
-    console.log(`Starting analysis for ${ticker}`);
+    console.log(`[API] Starting analysis for ${ticker}`);
 
     // Ensure demo user exists
     const { data: existingUser } = await supabase
@@ -88,10 +93,12 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error(`Analysis error: ${error.message}`);
+    console.error('[API] Analysis error:', error);
+    console.error('[API] Error stack:', error.stack);
     return NextResponse.json({
       success: false,
       error: error.message || 'Failed to start analysis',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     }, { status: 500 });
   }
 }
