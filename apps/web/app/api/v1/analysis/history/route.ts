@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/src/db/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -18,6 +17,8 @@ export async function OPTIONS() {
 
 export async function GET(req: NextRequest) {
   try {
+    // Lazy load Supabase
+    const { supabase } = await import('@/src/db/supabase');
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const userId = 'demo-user'; // Use demo user for serverless

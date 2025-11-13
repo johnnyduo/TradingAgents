@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/src/db/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -21,6 +20,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Lazy load Supabase
+    const { supabase } = await import('@/src/db/supabase');
     const id = params.id;
 
     if (!id) {
