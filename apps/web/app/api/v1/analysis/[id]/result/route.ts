@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/src/db/supabase';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
@@ -33,13 +37,13 @@ export async function GET(
       .single();
 
     if (error || !analysis) {
-      return res.status(404).json({ 
+      return NextResponse.json({ 
         success: false, 
         error: 'Analysis not found' 
-      });
+      }, { status: 404 });
     }
 
-    res.status(200).json({
+    return NextResponse.json({
       success: true,
       data: {
         id: analysis.id,
@@ -54,9 +58,9 @@ export async function GET(
     });
   } catch (error: any) {
     console.error('Error getting analysis result:', error);
-    res.status(500).json({ 
+    return NextResponse.json({ 
       success: false, 
       error: error.message || 'Internal server error' 
-    });
+    }, { status: 500 });
   }
 }

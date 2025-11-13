@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/src/db/supabase';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
