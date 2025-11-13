@@ -1,6 +1,19 @@
 // For client-side requests, use relative URLs (empty string)
 // For server-side requests, use full URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? '' : '');
+const getApiBaseUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  // Check if env var is actually set and not the string "undefined"
+  if (envUrl && envUrl !== 'undefined' && envUrl !== 'null') {
+    return envUrl;
+  }
+  
+  // For client-side, use empty string (relative URLs)
+  // For server-side, use empty string too (will fail, but that's expected)
+  return '';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export interface AnalysisResponse {
   success: boolean;
@@ -76,7 +89,11 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    // Construct URL - if baseUrl is empty, endpoint should start with /
+    const url = this.baseUrl ? `${this.baseUrl}${endpoint}` : endpoint;
+    console.log('[API Client] Request URL:', url);
+
+    const response = await fetch(url, {
       ...options,
       headers,
     });
