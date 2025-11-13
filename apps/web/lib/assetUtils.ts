@@ -90,7 +90,7 @@ export function formatReport(content: string): string {
   formatted = formatted.replace(/\*(.+?)\*/g, '$1');
   
   // Convert markdown lists to proper format
-  formatted = formatted.replace(/^[\-\*]\s+/gm, '• ');
+  formatted = formatted.replace(/^[-*]\s+/gm, '• ');
   formatted = formatted.replace(/^\d+\.\s+/gm, (match) => match);
   
   // Clean up excessive newlines (more than 2 consecutive)

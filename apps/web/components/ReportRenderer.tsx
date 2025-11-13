@@ -160,8 +160,8 @@ export default function ReportRenderer({ content, agentName, agentIcon }: Report
     
     // Look for percentage changes - must be near words like "change", "up", "down"
     const changePatterns = [
-      /(?:change|moved|up|down|gain|loss)[:\s]+([+\-]?\d+\.?\d*)%/i,
-      /([+\-]\d+\.?\d*)%\s+(?:change|move|gain|loss)/i
+      /(?:change|moved|up|down|gain|loss)[:\s]+([+-]?\d+\.?\d*)%/i,
+      /([+-]\d+\.?\d*)%\s+(?:change|move|gain|loss)/i
     ];
     
     for (const pattern of changePatterns) {
@@ -346,7 +346,7 @@ export default function ReportRenderer({ content, agentName, agentIcon }: Report
                       return (
                         <div key={pIndex} className="flex gap-3 items-start">
                           <span className="text-blue-400 mt-1">▸</span>
-                          <p className="flex-1">{trimmed.replace(/^[•\-\d+\.]\s*/, '')}</p>
+                          <p className="flex-1">{trimmed.replace(/^[•\d+.-]\s*/, '')}</p>
                         </div>
                       );
                     }
