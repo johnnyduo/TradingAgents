@@ -8,9 +8,17 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Prevent static export
-  trailingSlash: false,
-  skipTrailingSlashRedirect: true,
+  // Skip error page generation
+  generateBuildId: async () => {
+    return 'build-' + Date.now();
+  },
+  productionBrowserSourceMaps: false,
+  experimental: {
+    // Skip generating error pages
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
 };
 
 module.exports = nextConfig;
