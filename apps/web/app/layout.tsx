@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   description: 'Multi-agent AI system for comprehensive stock trading analysis',
 };
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function RootLayout({
   children,
 }: {
