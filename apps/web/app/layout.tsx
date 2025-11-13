@@ -1,22 +1,22 @@
-import type { Metadata } from 'next';
+'use client';
+
 import '../styles/globals.css';
-
-export const metadata: Metadata = {
-  title: 'TradingAgents - AI-Powered Trading Analysis',
-  description: 'Multi-agent AI system for comprehensive stock trading analysis',
-};
-
-// Force dynamic rendering
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+import { useEffect } from 'react';
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  useEffect(() => {
+    document.title = 'TradingAgents - AI-Powered Trading Analysis';
+  }, []);
+
   return (
     <html lang="en">
+      <head>
+        <meta name="description" content="Multi-agent AI system for comprehensive stock trading analysis" />
+      </head>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );
