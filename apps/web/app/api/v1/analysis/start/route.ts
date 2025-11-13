@@ -3,18 +3,22 @@ import { supabase } from '@/src/db/supabase';
 import { TradingGraph } from '@/src/graph/trading.graph';
 import { nanoid } from 'nanoid';
 
-// Force dynamic rendering and edge runtime
+// Route segment config
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 
+// CORS preflight
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
     },
   });
 }
