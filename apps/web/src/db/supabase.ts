@@ -1,21 +1,27 @@
-import { createClient } from '@supabase/supabase-js';
-import { logger } from '../utils/logger';
-import dotenv from 'dotenv';
-import path from 'path';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Load environment variables from the api directory
-dotenv.config({ path: path.join(__dirname, '../../.env') });
+let supabaseInstance: SupabaseClient | null = null;
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+export const getSupabase = () => {
+  if (supabaseInstance) {
+    return supabaseInstance;
+  }
 
-if (!supabaseUrl || !supabaseKey) {
-  logger.error('Missing Supabase credentials in environment variables');
-  logger.error(`SUPABASE_URL: ${supabaseUrl ? 'set' : 'missing'}`);
-  logger.error(`SUPABASE_ANON_KEY: ${supabaseKey ? 'set' : 'missing'}`);
-  throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be set');
-}
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY environment variables must be set');
+  }
 
-logger.info('✅ Supabase client initialized');
+  supabaseInstance = createClient(supabaseUrl, supabaseKey);
+  return supabaseInstance;
+};
+
+// For backward compatibility
+export const supabase = new Proxy({} as SupabaseClient, {
+  get: (target, prop) => {
+    const client = getSupabase();
+    return (client as any)[prop];
+  }
+});

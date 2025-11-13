@@ -11,13 +11,13 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().default('http://localhost:3000'),
 
   // Database
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  DATABASE_URL: z.string().optional(),
 
   // Redis
   REDIS_URL: z.string().default('redis://localhost:6379'),
 
   // Authentication
-  JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
+  JWT_SECRET: z.string().optional(),
 
   // LLM Providers
   OPENAI_API_KEY: z.string().optional(),

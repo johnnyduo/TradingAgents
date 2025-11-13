@@ -3,8 +3,6 @@ import { supabase } from '@/src/db/supabase';
 import { TradingGraph } from '@/src/graph/trading.graph';
 import { nanoid } from 'nanoid';
 
-const tradingGraph = new TradingGraph();
-
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
@@ -98,6 +96,9 @@ async function executeAnalysisAsync(
 ) {
   try {
     console.log(`Starting execution for analysis ${analysisId}`);
+
+    // Initialize trading graph at runtime
+    const tradingGraph = new TradingGraph();
 
     // Execute trading graph
     const finalState = await tradingGraph.execute({
