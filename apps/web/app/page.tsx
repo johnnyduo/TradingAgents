@@ -7,6 +7,8 @@ import AgentCard from '../components/AgentCard';
 import DecisionCard from '../components/DecisionCard';
 import AnalysisHistory from '../components/AnalysisHistory';
 import ReportRenderer from '../components/ReportRenderer';
+import AnalysisCharts from '../components/AnalysisCharts';
+import MetricsSummary from '../components/MetricsSummary';
 import { detectAssetType, formatReport, getAgentEmoji, type AssetInfo } from '../lib/assetUtils';
 
 interface AgentStatus {
@@ -447,9 +449,20 @@ export default function Home() {
           )}
         </AnimatePresence>
 
+        {/* Metrics Summary Dashboard */}
+        <AnimatePresence>
+          {result && result.status === 'completed' && result.state && (
+            <MetricsSummary
+              analysisState={result.state}
+              ticker={result.ticker}
+              decision={result.decision}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Decision Card */}
         <AnimatePresence>
-          {result && result.status === 'completed' && (
+          {result && result.status === 'completed' && !result.state && (
             <motion.div 
               className="mb-12"
               initial={{ opacity: 0 }}
@@ -517,6 +530,13 @@ export default function Home() {
                   </div>
                 )}
               </div>
+
+              {/* Interactive Charts */}
+              {result?.state && (
+                <div className="p-8 pt-0">
+                  <AnalysisCharts analysisState={result.state} />
+                </div>
+              )}
             </div>
           </div>
         )}
