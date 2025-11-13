@@ -102,12 +102,12 @@ No markdown symbols, just natural paragraphs with specific data.`,
 
       const prompt = await this.promptTemplate.format({
         ticker: state.ticker,
-        marketAnalysis: JSON.stringify(state.marketAnalysis || {}),
-        newsAnalysis: JSON.stringify(state.newsAnalysis || {}),
-        fundamentalAnalysis: JSON.stringify(state.fundamentalAnalysis || {}),
-        bullCase: JSON.stringify(state.bullCase || {}),
-        bearCase: JSON.stringify(state.bearCase || {}),
-        investDebate: JSON.stringify(state.investDebate || {}),
+        marketAnalysis: state.marketAnalysis?.report || 'Not available',
+        newsAnalysis: state.newsAnalysis?.report || 'Not available',
+        fundamentalAnalysis: state.fundamentalAnalysis?.report || 'Not available',
+        bullCase: state.bullCase?.thesis || 'Not available',
+        bearCase: state.bearCase?.thesis || 'Not available',
+        investDebate: state.investDebate?.summary || 'Not available',
       });
 
       const response = await this.llm.invoke(prompt);

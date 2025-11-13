@@ -67,10 +67,30 @@ export class FastTradingGraph {
       return await this.fundamentalsAnalyst.execute(state);
     });
 
-    // Trader Node
+    // Trader Node (with simplified context for fast mode)
     this.graph.addNode('trader', async (state: AgentState) => {
       logger.info('[FastGraph] 💰 Executing Trader');
-      return await this.trader.execute(state);
+      
+      // In fast mode, provide simplified placeholders for missing analyses
+      const enhancedState = {
+        ...state,
+        newsAnalysis: state.newsAnalysis || {
+          report: 'News analysis skipped in fast mode. Trader will focus on technical and fundamental data.',
+          sentiment: 'neutral',
+        },
+        bullCase: state.bullCase || {
+          thesis: 'Bull case: Based on market analyst findings - positive technical signals and fundamental strength.',
+        },
+        bearCase: state.bearCase || {
+          thesis: 'Bear case: Consider market volatility, risk factors, and any fundamental concerns identified.',
+        },
+        investDebate: state.investDebate || {
+          decision: 'proceed',
+          summary: 'Fast mode: Decision based on market and fundamental analysis.',
+        },
+      };
+      
+      return await this.trader.execute(enhancedState);
     });
 
     // Final Decision Node
