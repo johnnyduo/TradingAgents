@@ -1,4 +1,1 @@
-{
-  "buildCommand": "cd apps/web && pnpm run build",
-  "installCommand": "pnpm install --no-frozen-lockfile"
-}
+{}
