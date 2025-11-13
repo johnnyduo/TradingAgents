@@ -114,49 +114,76 @@ async function executeAnalysisAsync(
   date: string,
   config: any
 ) {
+  const TIMEOUT_MS = 280000; // 280 seconds (leave 20s buffer for Vercel's 300s limit)
+  
   try {
     console.log(`[BG] Starting execution for analysis ${analysisId}`);
     console.log(`[BG] Environment check:`, {
       hasOpenAI: !!process.env.OPENAI_API_KEY,
       hasAlphaVantage: !!process.env.ALPHA_VANTAGE_API_KEY,
     });
-
-    // Lazy load TradingGraph to prevent initialization errors
-    // Use FastTradingGraph by default for serverless (3 agents vs 6)
-    const useFastMode = config?.fastMode !== false; // Default to fast mode
     
-    console.log(`[BG] Loading graph module (${useFastMode ? 'Fast: 3 agents' : 'Full: 6 agents'})...`);
-    
-    let tradingGraph;
-    if (useFastMode) {
-      const { FastTradingGraph } = await import('@/src/graph/fast-trading.graph');
-      console.log(`[BG] FastTradingGraph module loaded successfully`);
-      tradingGraph = new FastTradingGraph();
-      console.log(`[BG] FastTradingGraph initialized successfully`);
-    } else {
-      const { TradingGraph } = await import('@/src/graph/trading.graph');
-      console.log(`[BG] TradingGraph module loaded successfully`);
-      tradingGraph = new TradingGraph();
-      console.log(`[BG] TradingGraph initialized successfully`);
-    }
+    // Wrap execution in timeout
+    const executionPromise = (async () => {
+      // Lazy load TradingGraph to prevent initialization errors
+      // Use FastTradingGraph by default for serverless (3 agents vs 6)
+      const useFastMode = config?.fastMode !== false; // Default to fast mode
+      
+      console.log(`[BG] Loading graph module (${useFastMode ? 'Fast: 3 agents' : 'Full: 6 agents'})...`);
+      
+      let tradingGraph;
+      if (useFastMode) {
+        const { FastTradingGraph } = await import('@/src/graph/fast-trading.graph');
+        console.log(`[BG] FastTradingGraph module loaded successfully`);
+        tradingGraph = new FastTradingGraph();
+        console.log(`[BG] FastTradingGraph initialized successfully`);
+      } else {
+        const { TradingGraph } = await import('@/src/graph/trading.graph');
+        console.log(`[BG] TradingGraph module loaded successfully`);
+        tradingGraph = new TradingGraph();
+        console.log(`[BG] TradingGraph initialized successfully`);
+      }
 
-    // Execute trading graph
-    console.log(`[BG] Executing trading graph for ${ticker}...`);
-    const finalState = await tradingGraph.execute({
-      ticker,
-      date,
-      context: config?.context || '',
+      // Execute trading graph
+      console.log(`[BG] Executing trading graph for ${ticker}...`);
+      const executionStart = Date.now();
+      
+      const finalState = await tradingGraph.execute({
+        ticker,
+        date,
+        context: config?.context || '',
+      });
+      
+      return { finalState, executionStart };
+    })();
+    
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Analysis timeout after 280 seconds')), TIMEOUT_MS);
     });
-    console.log(`[BG] Trading graph execution completed`);
+    
+    // Race between execution and timeout
+    const { finalState, executionStart } = await Promise.race([executionPromise, timeoutPromise]) as any;
+    
+    const executionTime = ((Date.now() - executionStart) / 1000).toFixed(2);
+    console.log(`[BG] Trading graph execution completed in ${executionTime}s`);
+    console.log(`[BG] Final state:`, {
+      hasMarketAnalysis: !!finalState.marketAnalysis,
+      hasFundamentalAnalysis: !!finalState.fundamentalAnalysis,
+      hasTraderDecision: !!finalState.traderDecision,
+      hasFinalDecision: !!finalState.finalDecision,
+    });
 
     // Extract decision
     const decision = finalState.finalDecision?.decision || 'hold';
+    console.log(`[BG] Decision extracted: ${decision}`);
 
     // Lazy load Supabase for update
+    console.log(`[BG] Loading Supabase for database update...`);
     const { supabase: supabaseClient } = await import('@/src/db/supabase');
 
     // Update database
-    await supabaseClient
+    console.log(`[BG] Updating database for analysis ${analysisId}...`);
+    const { data: updateResult, error: updateError } = await supabaseClient
       .from('AnalysisResult')
       .update({
         state: finalState as any,
@@ -166,6 +193,12 @@ async function executeAnalysisAsync(
       })
       .eq('id', analysisId);
 
+    if (updateError) {
+      console.error(`[BG] Database update error:`, updateError);
+      throw new Error(`Database update failed: ${updateError.message}`);
+    }
+    
+    console.log(`[BG] Database updated successfully`);
     console.log(`✅ Analysis ${analysisId} completed: ${decision}`);
   } catch (error: any) {
     console.error(`❌ Analysis ${analysisId} failed:`, error);
