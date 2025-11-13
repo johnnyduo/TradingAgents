@@ -4,7 +4,6 @@ import axios from 'axios';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
-const TWELVE_DATA_API_KEY = config.TWELVE_DATA_API_KEY || '87f2fa4ff46945ff84fef04b9edaee07';
 const BASE_URL = 'https://api.twelvedata.com';
 
 /**
@@ -20,10 +19,14 @@ export const getTwelveDataPriceTool = new DynamicStructuredTool({
     try {
       logger.debug(`Fetching Twelve Data price for ${symbol}`);
 
+      if (!config.TWELVE_DATA_API_KEY) {
+        throw new Error('TWELVE_DATA_API_KEY not configured');
+      }
+
       const response = await axios.get(`${BASE_URL}/quote`, {
         params: {
           symbol,
-          apikey: TWELVE_DATA_API_KEY,
+          apikey: config.TWELVE_DATA_API_KEY,
         },
         timeout: 30000,
       });
@@ -72,12 +75,16 @@ export const getTwelveDataTimeSeresTool = new DynamicStructuredTool({
     try {
       logger.debug(`Fetching Twelve Data time series for ${symbol}`);
 
+      if (!config.TWELVE_DATA_API_KEY) {
+        throw new Error('TWELVE_DATA_API_KEY not configured');
+      }
+
       const response = await axios.get(`${BASE_URL}/time_series`, {
         params: {
           symbol,
           interval,
           outputsize,
-          apikey: TWELVE_DATA_API_KEY,
+          apikey: config.TWELVE_DATA_API_KEY,
         },
         timeout: 30000,
       });
@@ -128,12 +135,16 @@ export const getTwelveDataIndicatorTool = new DynamicStructuredTool({
     try {
       logger.debug(`Calculating ${indicator.toUpperCase()} for ${symbol} from Twelve Data`);
 
+      if (!config.TWELVE_DATA_API_KEY) {
+        throw new Error('TWELVE_DATA_API_KEY not configured');
+      }
+
       const response = await axios.get(`${BASE_URL}/${indicator}`, {
         params: {
           symbol,
           interval,
           time_period: timePeriod,
-          apikey: TWELVE_DATA_API_KEY,
+          apikey: config.TWELVE_DATA_API_KEY,
         },
         timeout: 30000,
       });

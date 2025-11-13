@@ -1,9 +1,16 @@
 const axios = require('axios');
+require('dotenv').config({ path: '.env.local' });
 
-const TWELVE_DATA_API_KEY = '87f2fa4ff46945ff84fef04b9edaee07';
+const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY;
 
 async function testTwelveData() {
   console.log('\n🔍 Testing Twelve Data API...\n');
+  
+  if (!TWELVE_DATA_API_KEY) {
+    console.error('❌ TWELVE_DATA_API_KEY not found in environment variables');
+    process.exit(1);
+  }
+  
   console.log('API Key:', TWELVE_DATA_API_KEY.substring(0, 12) + '...\n');
   
   try {

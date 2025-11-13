@@ -1,9 +1,15 @@
 const axios = require('axios');
+require('dotenv').config({ path: '.env.local' });
 
 const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY || 'demo';
 
 async function testAlphaVantage() {
   console.log('\n🔍 Testing Alpha Vantage API...\n');
+  
+  if (!ALPHA_VANTAGE_API_KEY || ALPHA_VANTAGE_API_KEY === 'demo') {
+    console.warn('⚠️  Using demo API key (limited functionality)');
+  }
+  
   console.log('API Key:', ALPHA_VANTAGE_API_KEY.substring(0, 8) + '...\n');
   
   try {
