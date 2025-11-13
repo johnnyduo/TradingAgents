@@ -1,31 +1,29 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/src/db/supabase';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ 
-      success: false, 
-      error: 'Method not allowed' 
-    });
-  }
-
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = req.query;
+    const id = params.id;
 
-    if (!id || typeof id !== 'string') {
-      return res.status(400).json({ 
+    if (!id) {
+      return NextResponse.json({ 
         success: false, 
         error: 'Analysis ID is required' 
-      });
+      }, { status: 400 });
     }
 
     const { data: analysis, error } = await supabase

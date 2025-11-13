@@ -1,48 +1,45 @@
-import type { VercelRequest, VercelResponse} from '@vercel/node';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/src/db/supabase';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+export async function GET(req: NextRequest) {
   try {
-    const { limit = '10' } = req.query;
-    const limitNum = parseInt(limit as string, 10);
+    const { searchParams } = new URL(req.url);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
     const userId = 'demo-user'; // Use demo user for serverless
 
-    console.log(`Fetching analysis history (limit: ${limitNum})`);
+    console.log(`Fetching analysis history (limit: ${limit})`);
 
     const { data: results, error } = await supabase
       .from('AnalysisResult')
       .select('*')
       .eq('userId', userId)
       .order('createdAt', { ascending: false })
-      .limit(limitNum);
+      .limit(limit);
 
     if (error) {
       throw error;
     }
 
-    return res.status(200).json({
+    return NextResponse.json({
       success: true,
       data: results || [],
     });
   } catch (error: any) {
     console.error(`Get history error: ${error.message}`);
-    return res.status(500).json({
+    return NextResponse.json({
       success: false,
       error: error.message || 'Failed to get analysis history',
-    });
+    }, { status: 500 });
   }
 }
