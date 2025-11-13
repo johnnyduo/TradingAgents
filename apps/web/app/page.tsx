@@ -36,8 +36,19 @@ export default function Home() {
   const [backendOnline, setBackendOnline] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [assetInfo, setAssetInfo] = useState<AssetInfo | null>(null);
-  const getInitialAgents = (assetType: string = 'stock'): AgentStatus[] => {
+  const getInitialAgents = (assetType: string = 'stock', fastMode: boolean = true): AgentStatus[] => {
     const type = assetType as 'stock' | 'crypto' | 'forex';
+    
+    // Fast mode: 3 agents (optimized for serverless)
+    if (fastMode) {
+      return [
+        { name: 'Market Analyst', icon: getAgentEmoji('Market Analyst', type), status: 'pending' },
+        { name: 'Fundamentals Analyst', icon: getAgentEmoji('Fundamentals Analyst', type), status: 'pending' },
+        { name: 'Trader', icon: getAgentEmoji('Trader', type), status: 'pending' },
+      ];
+    }
+    
+    // Full mode: 6 agents (for local/dedicated servers)
     return [
       { name: 'Market Analyst', icon: getAgentEmoji('Market Analyst', type), status: 'pending' },
       { name: 'News Analyst', icon: getAgentEmoji('News Analyst', type), status: 'pending' },
@@ -48,7 +59,7 @@ export default function Home() {
     ];
   };
 
-  const [agents, setAgents] = useState<AgentStatus[]>(getInitialAgents());
+  const [agents, setAgents] = useState<AgentStatus[]>(getInitialAgents('stock', true)); // Default to fast mode
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [analysisStartTime, setAnalysisStartTime] = useState<number>(0);
   const pollIntervalRef = useRef<NodeJS.Timeout>();
@@ -79,7 +90,7 @@ export default function Home() {
     setAssetInfo(currentAssetInfo);
     
     // Reset agents with appropriate icons for asset type
-    setAgents(getInitialAgents(currentAssetInfo.type));
+    setAgents(getInitialAgents(currentAssetInfo.type, true)); // Use fast mode (3 agents)
 
     try {
       const response = await apiClient.startAnalysis({
@@ -99,7 +110,8 @@ export default function Home() {
       
       // Poll for results
       let attempts = 0;
-      const maxAttempts = 120; // 4 minutes max
+      const maxAttempts = 150; // 5 minutes max (increased for safety)
+      const isFastMode = agents.length === 3; // Detect fast mode
 
       pollIntervalRef.current = setInterval(async () => {
         attempts++;
@@ -116,30 +128,46 @@ export default function Home() {
 
           // Update agent status based on elapsed time (approximate)
           const elapsed = attempts * 2; // seconds
-          if (elapsed > 18 && currentAgent === 0) {
-            updateAgentStatus(0, 'completed');
-            updateAgentStatus(1, 'running');
-            currentAgent = 1;
-          }
-          if (elapsed > 38 && currentAgent === 1) {
-            updateAgentStatus(1, 'completed');
-            updateAgentStatus(2, 'running');
-            currentAgent = 2;
-          }
-          if (elapsed > 53 && currentAgent === 2) {
-            updateAgentStatus(2, 'completed');
-            updateAgentStatus(3, 'running');
-            currentAgent = 3;
-          }
-          if (elapsed > 78 && currentAgent === 3) {
-            updateAgentStatus(3, 'completed');
-            updateAgentStatus(4, 'running');
-            currentAgent = 4;
-          }
-          if (elapsed > 103 && currentAgent === 4) {
-            updateAgentStatus(4, 'completed');
-            updateAgentStatus(5, 'running');
-            currentAgent = 5;
+          
+          if (isFastMode) {
+            // Fast mode: 3 agents (~10-15s each)
+            if (elapsed > 12 && currentAgent === 0) {
+              updateAgentStatus(0, 'completed');
+              updateAgentStatus(1, 'running');
+              currentAgent = 1;
+            }
+            if (elapsed > 25 && currentAgent === 1) {
+              updateAgentStatus(1, 'completed');
+              updateAgentStatus(2, 'running');
+              currentAgent = 2;
+            }
+          } else {
+            // Full mode: 6 agents (~15-20s each)
+            if (elapsed > 18 && currentAgent === 0) {
+              updateAgentStatus(0, 'completed');
+              updateAgentStatus(1, 'running');
+              currentAgent = 1;
+            }
+            if (elapsed > 38 && currentAgent === 1) {
+              updateAgentStatus(1, 'completed');
+              updateAgentStatus(2, 'running');
+              currentAgent = 2;
+            }
+            if (elapsed > 53 && currentAgent === 2) {
+              updateAgentStatus(2, 'completed');
+              updateAgentStatus(3, 'running');
+              currentAgent = 3;
+            }
+            if (elapsed > 78 && currentAgent === 3) {
+              updateAgentStatus(3, 'completed');
+              updateAgentStatus(4, 'running');
+              currentAgent = 4;
+            }
+            if (elapsed > 103 && currentAgent === 4) {
+              updateAgentStatus(4, 'completed');
+              updateAgentStatus(5, 'running');
+              currentAgent = 5;
+            }
           }
 
           if (statusRes.data?.status === 'completed') {
@@ -190,14 +218,23 @@ export default function Home() {
   const getAgentReport = (result: AnalysisResult, index: number): string => {
     if (!result.state) return 'No report available';
     
-    const reports = [
-      result.state.marketAnalysis?.report,
-      result.state.newsAnalysis?.report,
-      result.state.fundamentalAnalysis?.report,
-      result.state.bullCase?.thesis,
-      result.state.bearCase?.thesis,
-      result.state.traderDecision?.reasoning
-    ];
+    // Fast mode: only 3 agents (market, fundamentals, trader)
+    const isFastMode = agents.length === 3;
+    
+    const reports = isFastMode
+      ? [
+          result.state.marketAnalysis?.report,
+          result.state.fundamentalAnalysis?.report,
+          result.state.traderDecision?.reasoning
+        ]
+      : [
+          result.state.marketAnalysis?.report,
+          result.state.newsAnalysis?.report,
+          result.state.fundamentalAnalysis?.report,
+          result.state.bullCase?.thesis,
+          result.state.bearCase?.thesis,
+          result.state.traderDecision?.reasoning
+        ];
     
     const rawReport = reports[index] || 'No report available';
     // Format report to remove markdown and make it natural
