@@ -1,10 +1,30 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
+  "globalEnv": [
+    "NODE_ENV",
+    "SUPABASE_URL",
+    "SUPABASE_ANON_KEY",
+    "DATABASE_URL",
+    "JWT_SECRET",
+    "OPENAI_API_KEY",
+    "ALPHA_VANTAGE_API_KEY",
+    "NEXT_PUBLIC_API_URL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NODE_ENV",
+        "SUPABASE_URL",
+        "SUPABASE_ANON_KEY",
+        "DATABASE_URL",
+        "JWT_SECRET",
+        "OPENAI_API_KEY",
+        "ALPHA_VANTAGE_API_KEY",
+        "NEXT_PUBLIC_API_URL"
+      ]
     },
     "dev": {
       "cache": false,
