@@ -311,8 +311,16 @@ export const getCompanyFundamentalsTool = new DynamicStructuredTool({
 
       const data = response.data;
       
-      if (!data || !data.Symbol) {
-        return `No fundamental data found for ticker ${ticker}`;
+      // Check for rate limit or empty response
+      if (!data || !data.Symbol || data.Note || data.Information) {
+        logger.warn(`Alpha Vantage fundamentals API rate limited or empty for ${ticker}. Using fallback analysis.`);
+        return JSON.stringify({
+          symbol: ticker,
+          note: 'API_RATE_LIMITED',
+          message: 'Alpha Vantage API rate limit reached. Fundamental analysis will proceed with relative valuation approach.',
+          fallback: true,
+          suggestion: `Analyst should provide analysis based on: (1) sector average P/E ratios and valuation multiples, (2) comparison to peers in the same industry, (3) market cap and trading patterns, (4) general business model assessment. Use qualitative analysis and market positioning instead of specific financial statement metrics.`
+        });
       }
 
       return JSON.stringify({
@@ -340,7 +348,14 @@ export const getCompanyFundamentalsTool = new DynamicStructuredTool({
       });
     } catch (error: any) {
       logger.error(`Error fetching fundamentals: ${error.message}`);
-      return `Error fetching fundamentals: ${error.message}`;
+      // Return fallback instead of error
+      return JSON.stringify({
+        symbol: ticker,
+        note: 'API_ERROR',
+        message: `Fundamentals API unavailable: ${error.message}`,
+        fallback: true,
+        suggestion: `Analyst should provide qualitative fundamental analysis for ${ticker} based on: sector positioning, business model strength, competitive advantages, market share, and relative valuation to sector peers. Focus on strategic assessment rather than specific financial metrics.`
+      });
     }
   },
 });
@@ -375,8 +390,16 @@ export const getStockNewsTool = new DynamicStructuredTool({
 
       const feed = response.data.feed;
       
-      if (!feed || feed.length === 0) {
-        return `No news found for ticker ${ticker}`;
+      // Check for rate limit or empty response
+      if (!feed || feed.length === 0 || response.data.Note || response.data.Information) {
+        logger.warn(`Alpha Vantage news API rate limited or empty for ${ticker}. Using fallback analysis.`);
+        return JSON.stringify({
+          ticker,
+          note: 'API_RATE_LIMITED',
+          message: 'Alpha Vantage API rate limit reached. Analysis will proceed with general market context and available technical data.',
+          fallback: true,
+          suggestion: `Analyst should analyze ${ticker} based on: (1) current technical indicators from market data, (2) recent price action and momentum, (3) broader market sentiment, (4) sector trends. Focus on what can be determined from price/volume data without specific news articles.`
+        });
       }
 
       const articles = feed.slice(0, limit).map((article: any) => ({
@@ -395,7 +418,14 @@ export const getStockNewsTool = new DynamicStructuredTool({
       return JSON.stringify({ ticker, articles });
     } catch (error: any) {
       logger.error(`Error fetching news: ${error.message}`);
-      return `Error fetching news: ${error.message}`;
+      // Return fallback instead of error
+      return JSON.stringify({
+        ticker,
+        note: 'API_ERROR',
+        message: `News API unavailable: ${error.message}`,
+        fallback: true,
+        suggestion: `Analyst should provide analysis based on available market and technical data. Note that specific news sentiment is unavailable but analysis can focus on price action, technical indicators, and broader market context for ${ticker}.`
+      });
     }
   },
 });

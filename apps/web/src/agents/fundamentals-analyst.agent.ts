@@ -107,21 +107,33 @@ Valuation Analysis:
 Calculate and state each valuation multiple: P/E ratio with the specific number, compare to the 5-year average and sector median. Do the same for P/B, P/S, and EV/EBITDA. Determine if the stock is trading at a premium or discount, and by how much (in percentage terms).
 
 Profitability Metrics:
-Report the exact gross margin, operating margin, and net margin percentages from recent financials. Compare these to the prior year figures. State the ROE and ROA with specific percentages. Identify if margins are expanding or contracting and quantify the change.
+⚠️ NOTE: If fundamental data indicates API rate limit or is unavailable, provide professional analysis based on:
+- Sector average valuation multiples (P/E, P/S, EV/EBITDA)
+- Comparative analysis to peer companies
+- Business model assessment and competitive positioning
+- Market cap and liquidity analysis
+- Qualitative factors (brand strength, market share, competitive moats)
+
+Profitability Analysis:
+If financial data available: Report exact margin percentages and YoY comparisons.
+If limited data: Assess relative profitability vs sector peers, business model margins, and operational efficiency indicators.
 
 Growth Assessment:
-Calculate the revenue growth rate (YoY and 3-year CAGR). State the EPS growth rate and free cash flow growth. Compare to industry average growth rates. Project forward growth based on guidance and analyst estimates if available in the data.
+If growth metrics available: Calculate YoY and CAGR for revenue, EPS, and FCF.
+If limited data: Evaluate growth based on market share trends, sector growth rates, expansion plans, and competitive positioning.
 
 Balance Sheet Strength:
-Report the debt-to-equity ratio with the exact number. Calculate the current ratio and quick ratio. State the interest coverage ratio. Assess if the company can comfortably service its debt. Note the cash position and free cash flow generation.
+If balance sheet data available: Report D/E ratio, current ratio, interest coverage with exact numbers.
+If limited data: Assess financial health through: trading patterns (institutional ownership), market cap stability, dividend history, credit market indicators.
 
 Quality of Earnings:
-Compare net income to free cash flow (are earnings converting to cash?). Check if revenue growth is organic or acquisition-driven. Assess capital efficiency by comparing ROIC to the cost of capital. Note any red flags in accounting practices.
+If cash flow data available: Compare net income to FCF and assess capital efficiency.
+If limited data: Evaluate earnings quality through: consistency of results, business model sustainability, competitive advantages.
 
 Intrinsic Value Estimate:
-Using the valuation multiples and growth rates from above, calculate a fair value price target. Show your work (e.g., "Target P/E of 25x forward earnings of $5.00 = $125 target"). Compare to current market price and state the upside/downside percentage.
+Use available data to estimate fair value through: (1) Sector-relative valuation (P/E vs peers), (2) Market cap to revenue ratio, (3) Growth-adjusted multiples (PEG approach), (4) Comparable company analysis.
 
-Cite specific financial figures, quarters/years, and percentages. Reference actual data from the fundamental reports provided.`,
+Clearly indicate which metrics are from specific financial statements vs estimated using sector comparisons.`,
       ],
     ]);
   }

@@ -91,27 +91,33 @@ The news data below is from real-time API feeds:
 
 === END DATA ===
 
+⚠️ NOTE: If the news data indicates API rate limit or unavailable data, provide a professional analysis based on:
+- General market sentiment and sector trends
+- Price action and momentum from the Market Analysis
+- Typical catalysts and events for this type of asset
+- Technical indicators suggesting investor sentiment (volume, volatility)
+- Your expert knowledge of the market context
+
 Required Sections:
 
 Breaking News Summary:
-Summarize the most recent and impactful news items (last 24-72 hours). Include publication dates, sources, and headlines. Focus on market-moving events.
+If news articles are available, summarize the most recent and impactful items (last 24-72 hours) with publication dates, sources, and headlines.
+If news data is limited, analyze the stock's recent price action and volume to infer market sentiment and likely catalysts.
 
 Sentiment Analysis:
-Calculate and report the aggregate sentiment score. Break down by source type (mainstream media, social media, analyst reports). Note the sentiment trend (improving/deteriorating) and compare to the price movement from the market analysis.
+If sentiment scores are available, report aggregate sentiment and breakdown by source type.
+If unavailable, infer sentiment from: (1) price momentum, (2) volume patterns, (3) sector performance, (4) market context. Note this is derived analysis.
 
 Key Catalysts and Events:
-Identify specific events that could drive price movement. For earnings, include the date and expectations. For product launches or announcements, explain the significance. For regulatory news, assess the timeline and impact.
-
-Credibility Assessment:
-Evaluate the reliability of the news sources. Note which stories are from primary sources versus speculation. Identify any rumors that need verification.
+Identify potential events that could drive price movement based on: earnings calendar timing, sector news, market positioning, and typical catalysts for this industry.
 
 Market Psychology:
-Analyze the crowd sentiment. Is there fear, greed, or indifference? Are retail and institutional investors aligned or divergent? What does social media buzz indicate about retail interest?
+Analyze crowd sentiment through available indicators: trading volume, price volatility, options activity implications, and sector rotation patterns.
 
 Price Impact Forecast:
-Based on the news and sentiment, project how this could affect the price in the short term (1-7 days) and medium term (1-4 weeks). Provide specific scenarios (e.g., "positive earnings could drive 5-8% rally") based on historical patterns and current sentiment intensity.
+Based on available data and market analysis, project potential price movement scenarios for short term (1-7 days) and medium term (1-4 weeks). Use technical levels and momentum patterns.
 
-Include specific dates, sources, and sentiment scores. Reference actual headlines or quotes from the news data.`,
+Note: Clearly indicate when analysis is based on technical/market data vs specific news articles.`,
       ],
     ]);
   }
@@ -171,6 +177,7 @@ Include specific dates, sources, and sentiment scores. Reference actual headline
         date: state.date,
         currentDateTime: getCurrentDateTimeWithTimezone(),
         marketAnalysis: marketContext,
+        newsData: dataContext || 'No news data available',
       });
 
       // Invoke LLM to analyze the data
