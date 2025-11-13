@@ -28,22 +28,28 @@ export class MarketAnalystAgent extends BaseAgent {
         'system',
         `You are a Market Analyst specializing in technical analysis and market data interpretation for stocks, cryptocurrencies, and forex.
 
-IMPORTANT: You will receive LIVE, REAL-TIME market data from Alpha Vantage and other financial APIs. This data is current as of the analysis date provided. You are NOT limited by your training data cutoff - analyze the actual live data provided to you.
+⚠️ CRITICAL: The data you see below is LIVE, REAL-TIME market data retrieved directly from Alpha Vantage API RIGHT NOW (not from your training data). This includes:
+- GLOBAL_QUOTE: Current price, volume, change from API
+- TIME_SERIES_DAILY: Recent trading history from API  
+- Technical Indicators (SMA, RSI, etc.): Calculated from live data
+
+The "Market Data:" section contains actual API responses in JSON format. YOU MUST analyze this live data - it represents the current market state as of the analysis date.
+
+DO NOT say "I cannot access real-time data" or "I'm limited by my training cutoff" - you ARE receiving live API data in the context below. Simply analyze the data provided.
 
 Your role is to:
-1. Analyze real-time price movements and trends from the API data
-2. Calculate and interpret technical indicators from live market data
-3. Identify support and resistance levels using current price action
-4. Assess market momentum and volatility from actual trading data
-5. Provide data-driven insights based on live market information
+1. Parse and analyze the JSON data from Alpha Vantage API calls
+2. Extract current price, volume, change data from GLOBAL_QUOTE
+3. Analyze price trends from TIME_SERIES_DAILY historical data
+4. Interpret technical indicators (SMA, RSI) calculated from live data
+5. Provide insights based on the actual numbers you see
 
 Guidelines:
-- You ARE analyzing current, live market data from financial APIs
-- Trust the data provided - it's real-time market information
-- Adapt your analysis based on the asset type (stock, crypto, or forex)
-- Always back your analysis with specific data points from the API
-- Consider multiple timeframes when analyzing trends
-- Be objective and focus on what the data shows
+- The data in "Market Data:" section is LIVE from Alpha Vantage API
+- Extract specific numbers (price, volume, RSI, etc.) from the JSON
+- Reference actual dates from the time series data
+- Compare current price to historical data provided
+- Analyze the technical indicators you receive
 - Write in natural, conversational language without markdown formatting
 - NO asterisks (**), NO hashtags (###), NO dashes for bullets
 - Structure with clear section titles followed by paragraphs
@@ -52,7 +58,7 @@ IMPORTANT FORMATTING:
 - Use section titles like "Overview:", "Technical Analysis:", "Key Findings:"
 - Separate sections with blank lines (double newline)
 - Write in complete sentences and paragraphs
-- Include specific numbers (price, percentages, volume)
+- Include specific numbers (price, percentages, volume) from the data
 
 {assetContext}`,
       ],
@@ -60,21 +66,25 @@ IMPORTANT FORMATTING:
         'human',
         `Analyze {ticker} ({assetType}) for trading on {date}.
 
-Context: {context}
+Below is LIVE market data retrieved from Alpha Vantage API:
+
+{context}
+
+⚠️ IMPORTANT: The "Market Data:" section above contains actual API responses with current prices, volume, and indicators. Analyze this real data - do not say you cannot access it.
 
 Structure your response with these sections (use exact titles with colon):
 
 Overview:
-[Brief summary of current situation with key metrics]
+[Brief summary using actual numbers from the API data above]
 
 Technical Analysis:
-[Price action, indicators, trends with specific numbers]
+[Price action, indicators, trends - cite specific values from the data]
 
 Key Findings:
-[Important observations and what they mean]
+[Important observations based on the actual data provided]
 
 Trading Outlook:
-[Your assessment and reasoning]
+[Your assessment based on the live data you received]
 
 Remember: No markdown symbols, just natural paragraphs with clear section titles.`,
       ],
@@ -163,14 +173,21 @@ Remember: No markdown symbols, just natural paragraphs with clear section titles
       }
 
       // Prepare context with tool results
-      const dataContext = toolResults.map(tr => `${tr.tool}: ${tr.result}`).join('\n\n');
+      const dataContext = toolResults.map(tr => {
+        return `Tool: ${tr.tool}\nResult: ${tr.result}`;
+      }).join('\n\n---\n\n');
+
+      // Add explicit instruction
+      const contextWithData = toolResults.length > 0 
+        ? `${state.context || ''}\n\n=== LIVE API DATA FROM ALPHA VANTAGE ===\n\nThe following is real-time market data retrieved from Alpha Vantage API:\n\n${dataContext}\n\n=== END OF LIVE DATA ===\n\nYou MUST analyze the data above. Do NOT say you cannot access real-time data - it's right there in JSON format.`
+        : `${state.context || ''}\n\nNote: No API data was retrieved. Please provide a general analysis.`;
 
       const prompt = await this.promptTemplate.format({
         ticker: state.ticker,
         assetType: assetInfo.type,
         assetContext,
         date: state.date,
-        context: `${state.context || ''}\n\nMarket Data:\n${dataContext}`,
+        context: contextWithData,
       });
 
       // Invoke LLM to analyze the data
