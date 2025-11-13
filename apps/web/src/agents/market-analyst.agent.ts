@@ -3,6 +3,7 @@ import { BaseAgent, AgentConfig } from './base.agent';
 import { stockTools } from '../tools/stock.tools';
 import { cryptoTools } from '../tools/crypto.tools';
 import { forexTools } from '../tools/forex.tools';
+import { twelveDataTools } from '../tools/twelvedata.tools';
 import { AgentState } from '@tradingagents/types';
 import { logger } from '../utils/logger';
 import { detectAssetType, getAnalysisContext } from '../utils/assetUtils';
@@ -18,8 +19,8 @@ export class MarketAnalystAgent extends BaseAgent {
   }
 
   protected setupTools(): void {
-    // Combine all tools - will select appropriate ones at runtime
-    this.tools = [...stockTools, ...cryptoTools, ...forexTools];
+    // Combine all tools including Twelve Data fallback
+    this.tools = [...stockTools, ...cryptoTools, ...forexTools, ...twelveDataTools];
   }
 
   protected createPromptTemplate(): ChatPromptTemplate {
@@ -28,14 +29,14 @@ export class MarketAnalystAgent extends BaseAgent {
         'system',
         `You are a Market Analyst specializing in technical analysis and market data interpretation for stocks, cryptocurrencies, and forex.
 
-⚠️ CRITICAL: The data you see below is LIVE, REAL-TIME market data retrieved directly from Alpha Vantage API RIGHT NOW (not from your training data). This includes:
-- GLOBAL_QUOTE: Current price, volume, change from API
-- TIME_SERIES_DAILY: Recent trading history from API  
+⚠️ CRITICAL: The data you see below is LIVE, REAL-TIME market data retrieved directly from financial APIs (Alpha Vantage and/or Twelve Data) RIGHT NOW (not from your training data). This includes:
+- Current Price: Real-time quote with volume, change, high/low
+- Time Series: Recent trading history (daily/intraday)
 - Technical Indicators (SMA, RSI, etc.): Calculated from live data
 
 The "Market Data:" section contains actual API responses in JSON format. YOU MUST analyze this live data - it represents the current market state as of the analysis date.
 
-DO NOT say "I cannot access real-time data" or "I'm limited by my training cutoff" - you ARE receiving live API data in the context below. Simply analyze the data provided.
+DO NOT say "I cannot access real-time data" or "I'm limited by my training cutoff" - you ARE receiving live API data in the context below. The data source will be indicated (AlphaVantage, TwelveData, etc.) but ALL sources provide current market data. Simply analyze the data provided.
 
 Your role is to:
 1. Parse and analyze the JSON data from Alpha Vantage API calls
@@ -105,17 +106,43 @@ Remember: No markdown symbols, just natural paragraphs with clear section titles
       const toolResults: any[] = [];
       
       if (assetInfo.type === 'stock') {
-        // Stock analysis tools
+        // Stock analysis tools with Twelve Data fallback
         try {
-          const priceResult = await this.tools.find(t => t.name === 'get_stock_price')?.invoke({ ticker: state.ticker });
-          if (priceResult) toolResults.push({ tool: 'get_stock_price', result: priceResult });
+          // Use fallback tool that tries Alpha Vantage first, then Twelve Data
+          const fallbackTool = this.tools.find(t => t.name === 'get_price_with_fallback');
+          if (fallbackTool) {
+            const priceResult = await fallbackTool.invoke({ symbol: state.ticker });
+            if (priceResult) {
+              toolResults.push({ tool: 'get_price_with_fallback', result: priceResult });
+              logger.info(`✓ Got price data for ${state.ticker} (with auto-fallback)`);
+            }
+          } else {
+            // Fallback to old method if new tool not available
+            const priceResult = await this.tools.find(t => t.name === 'get_stock_price')?.invoke({ ticker: state.ticker });
+            if (priceResult) toolResults.push({ tool: 'get_stock_price', result: priceResult });
+          }
         } catch (error: any) {
-          logger.warn(`Stock price fetch failed: ${error.message}`);
+          logger.warn(`Price fetch failed: ${error.message}`);
         }
 
         try {
+          // Try Alpha Vantage historical first
           const histResult = await this.tools.find(t => t.name === 'get_historical_prices')?.invoke({ ticker: state.ticker, outputsize: 'compact' });
-          if (histResult) toolResults.push({ tool: 'get_historical_prices', result: histResult });
+          if (histResult && !histResult.includes('Error')) {
+            toolResults.push({ tool: 'get_historical_prices', result: histResult });
+          } else {
+            // Fallback to Twelve Data
+            logger.info(`Trying Twelve Data for historical prices of ${state.ticker}`);
+            const twelveResult = await this.tools.find(t => t.name === 'get_twelvedata_timeseries')?.invoke({ 
+              symbol: state.ticker, 
+              interval: '1day',
+              outputsize: 100 
+            });
+            if (twelveResult) {
+              toolResults.push({ tool: 'get_twelvedata_timeseries', result: twelveResult });
+              logger.info(`✓ Got historical data from Twelve Data for ${state.ticker}`);
+            }
+          }
         } catch (error: any) {
           logger.warn(`Historical prices fetch failed: ${error.message}`);
         }

@@ -26,6 +26,7 @@ const envSchema = z.object({
 
   // Data Vendors
   ALPHA_VANTAGE_API_KEY: z.string().optional(),
+  TWELVE_DATA_API_KEY: z.string().optional(),
   FINNHUB_API_KEY: z.string().optional(),
   POLYGON_API_KEY: z.string().optional(),
   REDDIT_CLIENT_ID: z.string().optional(),
