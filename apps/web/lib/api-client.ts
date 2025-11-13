@@ -4,7 +4,6 @@ export interface AnalysisResponse {
   success: boolean;
   data?: {
     id: string;
-    socketRoomId: string;
     status: string;
   };
   error?: string;
