@@ -33,13 +33,11 @@ export default function AnalysisHistory({ isOpen, onClose, onSelectAnalysis }: A
   const loadHistory = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/analysis/history?limit=50`);
-      if (response.ok) {
-        const result = await response.json();
-        // API returns { success: true, data: [...] }
-        const historyData = result.data || [];
-        setHistory(Array.isArray(historyData) ? historyData : []);
-      }
+      // Use apiClient which handles base URL properly
+      const result = await apiClient.getAnalysisHistory({ limit: 50 });
+      // API returns { success: true, data: [...] }
+      const historyData = result.data || [];
+      setHistory(Array.isArray(historyData) ? historyData : []);
     } catch (error) {
       console.error('Failed to load history:', error);
       setHistory([]);
